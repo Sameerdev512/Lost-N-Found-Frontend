@@ -6,11 +6,27 @@ import {
 } from "react-router-dom";
 import Login from "../components/auth/Login";
 import Register from "../components/auth/Register";
+import ForgotPassword from "../components/auth/ForgotPassword";
+import ResetPassword from "../components/auth/ResetPassword";
 import PrivateRoute from "./PrivateRoute";
 import Dashboard from "../components/Dashboard";
 import AdminDashboard from "../components/admin/AdminDashboard";
 import Navigation from "../components/Navigation";
 import { AuthProvider } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
+import UserDashboard from "../components/user/UserDashboard";
+
+// Wrapper component for public routes
+const PublicRoute = ({ children }) => {
+  const { user } = useAuth();
+  
+  // Redirect authenticated users away from public routes
+  if (user) {
+    return <Navigate to={user.role === 'admin' ? '/admin/dashboard' : '/dashboard'} replace />;
+  }
+  
+  return children;
+};
 
 function AppRouter() {
   return (
@@ -18,13 +34,43 @@ function AppRouter() {
       <Router>
         <Navigation />
         <Routes>
-          {/* Public Routes */}
-          <Route path='/login' element={<Login />} />
-          <Route path='/register' element={<Register />} />
+          {/* Public Routes with authentication check */}
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <PublicRoute>
+                <ForgotPassword />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/reset-password/:token"
+            element={
+              <PublicRoute>
+                <ResetPassword />
+              </PublicRoute>
+            }
+          />
 
           {/* Protected Routes */}
           <Route
-            path='/dashboard'
+            path="/dashboard"
             element={
               <PrivateRoute>
                 <Dashboard />
@@ -33,16 +79,34 @@ function AppRouter() {
           />
 
           <Route
-            path='/admin/dashboard'
+            path="/admin/dashboard"
             element={
               <PrivateRoute adminOnly={true}>
                 <AdminDashboard />
               </PrivateRoute>
             }
           />
+          <Route
+            path="/user/dashboard"
+            element={
+              <PrivateRoute >
+                <UserDashboard />
+              </PrivateRoute>
+            }
+          />
+
 
           {/* Default Route */}
-          <Route path='/' element={<Navigate to='/login' replace />} />
+          <Route 
+            path="/"
+            element={<Navigate to="/login" replace />}
+          />
+
+          {/* Catch all route for undefined paths */}
+          <Route 
+            path="*" 
+            element={<Navigate to="/login" replace />} 
+          />
         </Routes>
       </Router>
     </AuthProvider>

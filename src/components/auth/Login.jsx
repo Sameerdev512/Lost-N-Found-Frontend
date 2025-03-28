@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, Form, Button, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import axios from "axios";
+import { Link } from "react-router-dom";
 
 const Login = () => {
   const {
@@ -12,84 +12,125 @@ const Login = () => {
     formState: { errors },
   } = useForm();
   const [loginError, setLoginError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  // const location = useLocation();
   const { login } = useAuth();
 
   const onSubmit = async (data) => {
     try {
-      const response = await axios.post("http://your-api-url/auth/login", data);
-      const { token, role } = response.data;
+      setIsLoading(true);
+      setLoginError("");
 
-      login({ token, role });
+      const user = await login({
+        email: data.email,
+        password: data.password
+      });
 
-      // Redirect based on role
-      if (role === "admin") {
-        navigate("/admin/dashboard");
+      // Role-based navigation
+      if (user.role === 'admin') {
+        navigate('/admin/dashboard');
       } else {
-        navigate("/dashboard");
+        navigate('/user/dashboard');
       }
+
     } catch (error) {
-      console.log(error);
-      setLoginError("Invalid email or password");
+      setLoginError(error.message || "Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className='login-container'>
-      <Card className='login-card'>
-        <div className='login-header'>
-          <h2>Welcome Back</h2>
-          <p>Please sign in to continue</p>
-        </div>
+    <div className="auth-container">
+      <Card className="auth-card">
+        <Card.Body>
+          <div className="auth-header">
+            <h2>Welcome Back</h2>
+            <p>Please sign in to continue</p>
+          </div>
 
-        {loginError && <Alert variant='danger'>{loginError}</Alert>}
+          {loginError && (
+            <Alert variant="danger" className="mb-4">
+              {loginError}
+            </Alert>
+          )}
 
-        <Form onSubmit={handleSubmit(onSubmit)}>
-          <Form.Group className='form-group'>
-            <Form.Label>Email address</Form.Label>
-            <Form.Control
-              type='email'
-              {...register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Invalid email address",
-                },
-              })}
-              isInvalid={!!errors.email}
-            />
-            {errors.email && (
-              <Form.Control.Feedback type='invalid'>
-                {errors.email.message}
-              </Form.Control.Feedback>
-            )}
-          </Form.Group>
+          <Form onSubmit={handleSubmit(onSubmit)}>
+            <Form.Group className="mb-3">
+              <Form.Label>Email address</Form.Label>
+              <Form.Control
+                type="email"
+                placeholder="Enter your email"
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: "Invalid email address",
+                  },
+                })}
+                isInvalid={!!errors.email}
+                disabled={isLoading}
+              />
+              {errors.email && (
+                <Form.Control.Feedback type="invalid">
+                  {errors.email.message}
+                </Form.Control.Feedback>
+              )}
+            </Form.Group>
 
-          <Form.Group className='form-group'>
-            <Form.Label>Password</Form.Label>
-            <Form.Control
-              type='password'
-              {...register("password", {
-                required: "Password is required",
-                minLength: {
-                  value: 6,
-                  message: "Password must be at least 6 characters",
-                },
-              })}
-              isInvalid={!!errors.password}
-            />
-            {errors.password && (
-              <Form.Control.Feedback type='invalid'>
-                {errors.password.message}
-              </Form.Control.Feedback>
-            )}
-          </Form.Group>
+            <Form.Group className="mb-4">
+              <Form.Label>Password</Form.Label>
+              <Form.Control
+                type="password"
+                placeholder="Enter your password"
+                {...register("password", {
+                  required: "Password is required",
+                  minLength: {
+                    value: 6,
+                    message: "Password must be at least 6 characters",
+                  },
+                })}
+                isInvalid={!!errors.password}
+                disabled={isLoading}
+              />
+              {errors.password && (
+                <Form.Control.Feedback type="invalid">
+                  {errors.password.message}
+                </Form.Control.Feedback>
+              )}
+            </Form.Group>
 
-          <Button variant='primary' type='submit' className='login-button'>
-            Sign In
-          </Button>
-        </Form>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <Form.Check
+                type="checkbox"
+                label="Remember me"
+                {...register("rememberMe")}
+                disabled={isLoading}
+              />
+              <Link to="/forgot-password" className="text-primary text-decoration-none">
+                Forgot Password?
+              </Link>
+            </div>
+
+            <Button 
+              variant="primary" 
+              type="submit" 
+              className="w-100 mb-3"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing in...' : 'Sign In'}
+            </Button>
+
+            <div className="text-center">
+              <p className="mb-0">
+                Don't have an account?{' '}
+                <Link to="/register" className="text-primary text-decoration-none">
+                  Register here
+                </Link>
+              </p>
+            </div>
+          </Form>
+        </Card.Body>
       </Card>
     </div>
   );

@@ -20,7 +20,7 @@ const Navigation = () => {
           <Nav className="me-auto">
             {user && (
               <>
-                <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
+                <Nav.Link as={Link} to="user/dashboard">Dashboard</Nav.Link>
                 {user.role === 'admin' && (
                   <Nav.Link as={Link} to="/admin/dashboard">Admin</Nav.Link>
                 )}

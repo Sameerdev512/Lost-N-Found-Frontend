@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, Form, Button, Alert } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -7,29 +7,90 @@ import { useAuth } from '../../context/AuthContext';
 const Register = () => {
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
   const [registerError, setRegisterError] = useState('');
-  // const navigate = useNavigate();
-  const { register: registerUser } = useAuth();
+  const navigate = useNavigate();
+  const { login } = useAuth();
   
   const password = watch('password');
+
+  // Check if admin exists and create one if not
+  useEffect(() => {
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const adminExists = users.some(user => user.role === 'admin');
+
+    if (!adminExists) {
+      // Create default admin account
+      const adminUser = {
+        id: Date.now(),
+        username: 'admin',
+        email: 'admin@example.com',
+        password: 'Admin@123', // In real app, use hashed password
+        role: 'admin',
+        isActive: true
+      };
+      users.push(adminUser);
+      localStorage.setItem('users', JSON.stringify(users));
+      console.log('Default admin account created');
+    }
+  }, []);
 
   const onSubmit = async (data) => {
     try {
       setRegisterError('');
-      await registerUser({
+      
+      // Get existing users
+      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+      
+      // Check for duplicate email
+      const emailExists = existingUsers.some(user => user.email === data.email);
+      if (emailExists) {
+        throw new Error('An account with this email already exists');
+      }
+
+      // Check for duplicate username
+      const usernameExists = existingUsers.some(user => user.username === data.username);
+      if (usernameExists) {
+        throw new Error('This username is already taken');
+      }
+
+      // Check if this is admin registration (using admin code)
+      const isAdmin = data.adminCode === 'ADMIN123'; // In real app, use secure method
+
+      // Create new user object
+      const newUser = {
+        id: Date.now(),
         username: data.username,
         email: data.email,
-        password: data.password
-      });
-      navigate('/login', { 
-        state: { message: 'Registration successful! Please login.' }
-      });
+        password: data.password, // In real app, use hashed password
+        role: isAdmin ? 'admin' : 'user',
+        isActive: true,
+        createdAt: new Date().toISOString()
+      };
+
+      // Save user to localStorage
+      existingUsers.push(newUser);
+      localStorage.setItem('users', JSON.stringify(existingUsers));
+
+      // Create user session data
+      const userData = {
+        token: `mock-token-${Date.now()}`,
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role
+      };
+
+      // Log the user in
+      login(userData);
+
+      // Redirect based on role
+      navigate(newUser.role === 'admin' ? '/admin/dashboard' : '/dashboard');
+
     } catch (error) {
-      setRegisterError(error.message);
+      setRegisterError(error.message || 'Registration failed. Please try again.');
     }
   };
 
   return (
-    <div className="register-container">
+    <div className="auth-container register-container">
       <Card className="register-card">
         <Card.Body>
           <div className="register-header">
@@ -128,6 +189,18 @@ const Register = () => {
                   {errors.confirmPassword.message}
                 </Form.Control.Feedback>
               )}
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Admin Code (Optional)</Form.Label>
+              <Form.Control
+                type="password"
+                placeholder="Enter admin code if applicable"
+                {...register('adminCode')}
+              />
+              <Form.Text className="text-muted">
+                Leave empty for regular user registration
+              </Form.Text>
             </Form.Group>
 
             <Button 
