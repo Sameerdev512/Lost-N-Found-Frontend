@@ -25,6 +25,13 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [showSecurityQuestionModal, setShowSecurityQuestionModal] = useState(false);
+  const [itemSecurityQuestions, setItemSecurityQuestions] = useState([]);
+  const [currentQuestion, setCurrentQuestion] = useState({
+    question: '',
+    answer: ''
+  });
 
   // Fetch data
   useEffect(() => {
@@ -173,7 +180,143 @@ const AdminDashboard = () => {
     }
   };
 
+  // Handle adding security question to found item
+  const handleAddItemSecurityQuestion = (item) => {
+    setSelectedItem(item);
+    setItemSecurityQuestions(item.securityQuestions || []);
+    setCurrentQuestion({ question: '', answer: '' });
+    setShowSecurityQuestionModal(true);
+  };
+
+  // Handle saving security question for item
+  const handleSaveItemSecurityQuestion = () => {
+    try {
+      if (!currentQuestion.question.trim() || !currentQuestion.answer.trim()) {
+        setError("Question and answer are required");
+        return;
+      }
+
+      const allItems = JSON.parse(localStorage.getItem("items") || "[]");
+      const updatedItems = allItems.map(item => {
+        if (item.id === selectedItem.id) {
+          const existingQuestions = item.securityQuestions || [];
+          return {
+            ...item,
+            securityQuestions: [...existingQuestions, {
+              id: Date.now(),
+              question: currentQuestion.question,
+              answer: currentQuestion.answer
+            }],
+            status: "approved"
+          };
+        }
+        return item;
+      });
+
+      localStorage.setItem("items", JSON.stringify(updatedItems));
+      setItems(items.filter(item => item.id !== selectedItem.id));
+      
+      // Reset the form
+      setCurrentQuestion({ question: '', answer: '' });
+      setSuccessMessage("Security question added successfully");
+      
+      // Don't close the modal to allow adding more questions
+      if (window.confirm("Question added successfully. Do you want to add another question?")) {
+        setCurrentQuestion({ question: '', answer: '' });
+      } else {
+        setShowSecurityQuestionModal(false);
+      }
+
+    } catch (err) {
+      setError("Failed to add security question");
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  // Add this new function to handle viewing existing questions
+  const handleViewQuestions = (item) => {
+    setSelectedItem(item);
+    setItemSecurityQuestions(item.securityQuestions || []);
+  };
+
   if (loading) return <div>Loading...</div>;
+
+  const renderItemsTable = () => (
+    <Table responsive>
+      <thead>
+        <tr>
+          <th>Item Name</th>
+          <th>Category</th>
+          <th>Type</th>
+          <th>Reported By</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((item) => (
+          <tr key={item.id}>
+            <td>{item.name}</td>
+            <td>{item.category}</td>
+            <td>
+              <Badge bg={item.type === "lost" ? "danger" : "success"}>
+                {item.type}
+              </Badge>
+            </td>
+            <td>{item.reportedBy}</td>
+            <td>
+              {item.type === "found" ? (
+                <div className="d-flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="info"
+                    onClick={() => handleAddItemSecurityQuestion(item)}
+                  >
+                    Add Questions
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="success"
+                    onClick={() => handleItemStatus(item.id, "approved")}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => handleItemStatus(item.id, "rejected")}
+                  >
+                    Reject
+                  </Button>
+                  {item.securityQuestions?.length > 0 && (
+                    <Badge bg="success" className="d-flex align-items-center">
+                      {item.securityQuestions.length} questions
+                    </Badge>
+                  )}
+                </div>
+              ) : (
+                <div className="d-flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="success"
+                    onClick={() => handleItemStatus(item.id, "approved")}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => handleItemStatus(item.id, "rejected")}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
+  );
 
   return (
     <Container fluid className="py-4">
@@ -262,50 +405,7 @@ const AdminDashboard = () => {
                   <Card.Body>
                     {items.length === 0 ? (
                       <Alert variant="info">No pending items to review</Alert>
-                    ) : (
-                      <Table responsive>
-                        <thead>
-                          <tr>
-                            <th>Item Name</th>
-                            <th>Category</th>
-                            <th>Type</th>
-                            <th>Reported By</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {items.map((item) => (
-                            <tr key={item.id}>
-                              <td>{item.name}</td>
-                              <td>{item.category}</td>
-                              <td>
-                                <Badge bg={item.type === "lost" ? "danger" : "success"}>
-                                  {item.type}
-                                </Badge>
-                              </td>
-                              <td>{item.reportedBy}</td>
-                              <td>
-                                <Button
-                                  size="sm"
-                                  variant="success"
-                                  className="me-2"
-                                  onClick={() => handleItemStatus(item.id, "approved")}
-                                >
-                                  Approve
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="danger"
-                                  onClick={() => handleItemStatus(item.id, "rejected")}
-                                >
-                                  Reject
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </Table>
-                    )}
+                    ) : renderItemsTable()}
                   </Card.Body>
                 </Card>
               </Tab.Pane>
@@ -393,6 +493,72 @@ const AdminDashboard = () => {
             Cancel
           </Button>
           <Button variant="primary" onClick={handleAddQuestion}>
+            Add Question
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Add new Modal for item security question */}
+      <Modal show={showSecurityQuestionModal} onHide={() => setShowSecurityQuestionModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Security Questions for Found Item</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Item Name</Form.Label>
+              <Form.Control
+                type="text"
+                value={selectedItem?.name || ""}
+                disabled
+              />
+            </Form.Group>
+            
+            {/* Show existing questions if any */}
+            {selectedItem?.securityQuestions?.length > 0 && (
+              <div className="mb-3">
+                <h6>Existing Questions:</h6>
+                {selectedItem.securityQuestions.map((q, index) => (
+                  <div key={q.id} className="mb-2 p-2 border rounded">
+                    <strong>Q{index + 1}:</strong> {q.question}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <Form.Group className="mb-3">
+              <Form.Label>New Security Question</Form.Label>
+              <Form.Control
+                type="text"
+                value={currentQuestion.question}
+                onChange={(e) => setCurrentQuestion({
+                  ...currentQuestion,
+                  question: e.target.value
+                })}
+                placeholder="Enter security question for this item"
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Answer</Form.Label>
+              <Form.Control
+                type="text"
+                value={currentQuestion.answer}
+                onChange={(e) => setCurrentQuestion({
+                  ...currentQuestion,
+                  answer: e.target.value
+                })}
+                placeholder="Enter answer to the security question"
+                required
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowSecurityQuestionModal(false)}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleSaveItemSecurityQuestion}>
             Add Question
           </Button>
         </Modal.Footer>
