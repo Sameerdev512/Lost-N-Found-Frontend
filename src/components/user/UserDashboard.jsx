@@ -49,32 +49,34 @@ const UserDashboard = () => {
     try {
       const allItems = JSON.parse(localStorage.getItem('items') || '[]');
       
-      // Set user's reported items - show pending items
-      const userItems = allItems.filter(item => 
-        item.reportedBy === user.email && 
-        item.status === 'pending'
-      );
+      // Set user's reported items - show ALL items reported by the user
+      const userItems = allItems.filter(item => item.reportedBy === user.email);
       setItems(userItems);
 
-      // Set lost items (show approved and expected items from others)
+      // Set lost items (show approved and expected items from others, including admin)
       const lostItemsList = allItems.filter(item => 
         item.type === 'lost' && 
         (item.status === 'approved' || item.status === 'expected') &&
-        item.reportedBy !== user.email
+        item.reportedBy !== user.email // This includes admin items
       );
       setLostItems(lostItemsList);
 
-      // Set found items (show approved and expected items from others)
+      // Set found items (show approved and expected items from others, including admin)
       const foundItemsList = allItems.filter(item =>
         item.type === 'found' && 
         (item.status === 'approved' || item.status === 'expected') &&
-        item.reportedBy !== user.email
+        item.reportedBy !== user.email // This includes admin items
       );
       setFoundItems(foundItemsList);
     } catch (error) {
       showMessage('danger', 'Failed to fetch items');
     }
   }, [user.email]);
+
+  // Add a function to check if an item is from admin
+  const isAdminItem = (item) => {
+    return item.adminProcessedBy && item.adminProcessedBy === item.reportedBy;
+  };
 
   const handleShowModal = (item = null) => {
     setEditingItem(item);
@@ -134,9 +136,8 @@ const UserDashboard = () => {
             : item
         );
         localStorage.setItem('items', JSON.stringify(updatedItems));
-        setItems(updatedItems.filter(item => 
-          item.reportedBy === user.email && item.status !== 'rejected'
-        ));
+        // Update items to show all user items
+        setItems(updatedItems.filter(item => item.reportedBy === user.email));
         showMessage('success', 'Item updated successfully');
       } else {
         const newItem = {
@@ -166,9 +167,8 @@ const UserDashboard = () => {
         const allItems = JSON.parse(localStorage.getItem('items') || '[]');
         const updatedItems = allItems.filter(item => item.id !== itemId);
         localStorage.setItem('items', JSON.stringify(updatedItems));
-        setItems(prev => prev.filter(item => 
-          item.id !== itemId && item.status !== 'rejected'
-        ));
+        // Update items to show remaining user items
+        setItems(prev => prev.filter(item => item.id !== itemId));
         showMessage('success', 'Item deleted successfully');
       } catch (error) {
         showMessage('danger', 'Failed to delete item');
@@ -404,16 +404,15 @@ const UserDashboard = () => {
                                 size="sm"
                                 variant="outline-primary"
                                 onClick={() => handleShowModal(item)}
-                                disabled={item.status !== 'pending'}
+                                disabled={item.status === 'approved' || item.status === 'resolved'}
                               >
                                 Edit
                               </Button>
-                              {/* Remove the Add Questions button */}
                               <Button
                                 size="sm"
                                 variant="outline-danger"
                                 onClick={() => handleDelete(item.id)}
-                                disabled={item.status !== 'pending'}
+                                disabled={item.status === 'approved' || item.status === 'resolved'}
                               >
                                 Delete
                               </Button>
@@ -442,7 +441,17 @@ const UserDashboard = () => {
                       <Col key={item.id}>
                         <Card>
                           <Card.Body>
-                            <Card.Title>{item.name}</Card.Title>
+                            <Card.Title className="d-flex justify-content-between align-items-start">
+                              {item.name}
+                              <div>
+                                <Badge bg={item.type === 'lost' ? 'danger' : 'success'} className="me-1">
+                                  {item.type}
+                                </Badge>
+                                {isAdminItem(item) && (
+                                  <Badge bg="info">Admin</Badge>
+                                )}
+                              </div>
+                            </Card.Title>
                             <Card.Subtitle className="mb-2 text-muted">
                               {item.category}
                             </Card.Subtitle>
@@ -491,7 +500,17 @@ const UserDashboard = () => {
                       <Col key={item.id}>
                         <Card>
                           <Card.Body>
-                            <Card.Title>{item.name}</Card.Title>
+                            <Card.Title className="d-flex justify-content-between align-items-start">
+                              {item.name}
+                              <div>
+                                <Badge bg={item.type === 'lost' ? 'danger' : 'success'} className="me-1">
+                                  {item.type}
+                                </Badge>
+                                {isAdminItem(item) && (
+                                  <Badge bg="info">Admin</Badge>
+                                )}
+                              </div>
+                            </Card.Title>
                             <Card.Subtitle className="mb-2 text-muted">
                               {item.category}
                             </Card.Subtitle>

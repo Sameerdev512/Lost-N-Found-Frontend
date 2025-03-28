@@ -96,11 +96,24 @@ const AdminDashboard = () => {
     try {
       // Update items in localStorage
       const allItems = JSON.parse(localStorage.getItem("items") || "[]");
-      const updatedItems = allItems.map(item => 
-        item.id === itemId ? { ...item, status } : item
-      );
+      const updatedItems = allItems.map(item => {
+        if (item.id === itemId) {
+          return { 
+            ...item, 
+            status,
+            // Add admin information when approving/rejecting
+            adminProcessedBy: user.email,
+            adminProcessedAt: new Date().toISOString(),
+            // If it's an admin-added item, set the reportedBy to admin
+            reportedBy: item.reportedBy || user.email
+          };
+        }
+        return item;
+      });
 
       localStorage.setItem("items", JSON.stringify(updatedItems));
+      
+      // Update local state to remove the processed item from the pending list
       setItems(items.filter(item => item.id !== itemId));
       setSuccessMessage(`Item ${status} successfully`);
       setTimeout(() => setSuccessMessage(""), 3000);
@@ -108,6 +121,35 @@ const AdminDashboard = () => {
     } catch (err) {
       setError("Failed to update item status");
       setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  // Add a new function to handle adding items by admin
+  const handleAddItem = () => {
+    const newItem = {
+      id: Date.now(),
+      name: itemName,
+      category: itemCategory,
+      type: itemType, // 'lost' or 'found'
+      description: itemDescription,
+      location: itemLocation,
+      reportedBy: user.email, // admin's email
+      status: 'approved', // automatically approve admin-added items
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      adminProcessedBy: user.email,
+      adminProcessedAt: new Date().toISOString(),
+      securityQuestions: [] // for found items
+    };
+
+    try {
+      const allItems = JSON.parse(localStorage.getItem("items") || "[]");
+      const updatedItems = [...allItems, newItem];
+      localStorage.setItem("items", JSON.stringify(updatedItems));
+      setSuccessMessage("Item added successfully");
+      // Reset form fields...
+    } catch (err) {
+      setError("Failed to add item");
     }
   };
 
