@@ -1,14 +1,13 @@
 import { useForm } from 'react-hook-form';
 import { useState } from 'react';
 import { Card, Form, Button, Alert } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import '../assets/styles/login.scss';
 
 const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [loginError, setLoginError] = useState('');
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const onSubmit = async (data) => {
     try {
@@ -20,9 +19,9 @@ const Login = () => {
       
       // Redirect based on role
       if (role === 'admin') {
-        navigate('/admin/dashboard');
+        // navigate('/admin/dashboard');
       } else {
-        navigate('/dashboard');
+        // navigate('/dashboard');
       }
     } catch (error) {
       setLoginError('Invalid email or password');
