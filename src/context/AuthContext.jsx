@@ -22,44 +22,24 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (credentials) => {
+  const login = async (userData) => {
     try {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = users.find(u => u.email === credentials.email);
-
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      if (!user.isActive) {
-        throw new Error('Account is deactivated. Please contact administrator.');
-      }
-
-      if (user.password !== credentials.password) {
-        throw new Error('Invalid password');
-      }
-
-      const updatedUser = {
-        ...user,
-        lastLogin: new Date().toISOString()
-      };
-
-      const updatedUsers = users.map(u => 
-        u.email === updatedUser.email ? updatedUser : u
-      );
-      localStorage.setItem('users', JSON.stringify(updatedUsers));
-
+      // Store the complete user data
       const userToStore = {
-        id: updatedUser.id,
-        email: updatedUser.email,
-        username: updatedUser.username,
-        role: updatedUser.role,
-        isActive: updatedUser.isActive,
-        lastLogin: updatedUser.lastLogin
+        id: userData.id,
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+        token: userData.token,
+        isActive: userData.isActive
       };
 
+      // Save to localStorage
       localStorage.setItem('currentUser', JSON.stringify(userToStore));
+      
+      // Update the user state
       setUser(userToStore);
+      
       return userToStore;
     } catch (error) {
       throw error;

@@ -4,6 +4,7 @@ import { Card, Form, Button, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
+import { API_BASE_URL } from '../../config/config';
 
 const Login = () => {
   const {
@@ -21,16 +22,45 @@ const Login = () => {
       setIsLoading(true);
       setLoginError("");
 
-      const user = await login({
-        email: data.email,
-        password: data.password
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: data.email,
+          password: data.password
+        }),
       });
 
+      if (!response.ok) {
+        throw new Error("Login failed. Please check your credentials.");
+      }
+
+      const responseData = await response.json();
+      console.log(responseData);
+
+      // Create a user object with all necessary data
+      const userData = {
+        email: data.email,
+        token: responseData.token,
+        name: responseData.name,
+        role: responseData.role,
+        isActive: true
+      };
+
+      // Use the login function from AuthContext with the complete user data
+      await login(userData);
+
+      localStorage.setItem("token", responseData.token);
+      localStorage.setItem("role",responseData.role);
+      localStorage.setItem("name",responseData.name)
+
       // Role-based navigation
-      if (user.role === 'admin') {
+      if (responseData.role.toLowerCase() === 'admin') {
         navigate('/admin/dashboard');
       } else {
-        navigate('/user/dashboard');
+        navigate('/user/dashboard'); // Make sure this matches the route path
       }
 
     } catch (error) {

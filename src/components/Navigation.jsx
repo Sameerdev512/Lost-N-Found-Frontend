@@ -11,18 +11,36 @@ const Navigation = () => {
     navigate('/login')
   }
 
+  const handleBrandClick = () => {
+    if (user) {
+      navigate('/home');
+    } else {
+      navigate('/login');
+    }
+  }
+
   return (
     <Navbar bg="light" expand="lg" className="mb-4">
       <Container>
-        <Navbar.Brand as={Link} to="/">Lost & Found</Navbar.Brand>
+        <Navbar.Brand
+          onClick={handleBrandClick}
+          style={{ cursor: "pointer" }}
+        >
+          Lost & Found
+        </Navbar.Brand>
+
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
             {user && (
               <>
-                <Nav.Link as={Link} to="user/dashboard">Dashboard</Nav.Link>
-                {user.role === 'admin' && (
-                  <Nav.Link as={Link} to="/admin/dashboard">Admin</Nav.Link>
+                <Nav.Link as={Link} to="user/dashboard">
+                  Dashboard
+                </Nav.Link>
+                {user.role === "admin" && (
+                  <Nav.Link as={Link} to="/admin/dashboard">
+                    Admin
+                  </Nav.Link>
                 )}
               </>
             )}
@@ -34,15 +52,19 @@ const Navigation = () => {
               </Button>
             ) : (
               <>
-                <Nav.Link as={Link} to="/login">Login</Nav.Link>
-                <Nav.Link as={Link} to="/register">Register</Nav.Link>
+                <Nav.Link as={Link} to="/login">
+                  Login
+                </Nav.Link>
+                <Nav.Link as={Link} to="/register">
+                  Register
+                </Nav.Link>
               </>
             )}
           </Nav>
         </Navbar.Collapse>
       </Container>
     </Navbar>
-  )
+  );
 }
 
 export default Navigation

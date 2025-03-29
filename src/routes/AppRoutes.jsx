@@ -15,6 +15,7 @@ import Navigation from "../components/Navigation";
 import { AuthProvider } from "../context/AuthContext";
 import { useAuth } from "../context/AuthContext";
 import UserDashboard from "../components/user/UserDashboard";
+import HomePage from "../components/pages/HomePage";
 
 // Wrapper component for public routes
 const PublicRoute = ({ children }) => {
@@ -22,7 +23,7 @@ const PublicRoute = ({ children }) => {
   
   // Redirect authenticated users away from public routes
   if (user) {
-    return <Navigate to={user.role === 'admin' ? '/admin/dashboard' : '/dashboard'} replace />;
+    return <Navigate to={user.role.toLowerCase() === 'admin' ? '/admin/dashboard' : '/user/dashboard'} replace />;
   }
   
   return children;
@@ -34,6 +35,9 @@ function AppRouter() {
       <Router>
         <Navigation />
         <Routes>
+          {/* Add Homepage Route */}
+          <Route path="/homepage" element={<HomePage />} />
+
           {/* Public Routes with authentication check */}
           <Route
             path="/login"
@@ -79,6 +83,15 @@ function AppRouter() {
           />
 
           <Route
+            path="/home"
+            element={
+              <PrivateRoute>
+                <HomePage />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
             path="/admin/dashboard"
             element={
               <PrivateRoute adminOnly={true}>
@@ -89,24 +102,17 @@ function AppRouter() {
           <Route
             path="/user/dashboard"
             element={
-              <PrivateRoute >
+              <PrivateRoute>
                 <UserDashboard />
               </PrivateRoute>
             }
           />
 
-
           {/* Default Route */}
-          <Route 
-            path="/"
-            element={<Navigate to="/login" replace />}
-          />
+          <Route path="/" element={<Navigate to="/homepage" replace />} />
 
           {/* Catch all route for undefined paths */}
-          <Route 
-            path="*" 
-            element={<Navigate to="/login" replace />} 
-          />
+          <Route path="*" element={<Navigate to="/homepage" replace />} />
         </Routes>
       </Router>
     </AuthProvider>
