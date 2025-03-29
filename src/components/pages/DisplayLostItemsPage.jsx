@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Form, Button, Alert, Badge, InputGroup } from 'react-bootstrap';
+import { Container, Row, Col, Card, Form, Button, Alert, Badge, InputGroup, Modal } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
 
 const DisplayLostItems = () => {
@@ -22,24 +22,25 @@ const DisplayLostItems = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Get items from localStorage
-        const storedItems = JSON.parse(localStorage.getItem('items') || '[]');
-        
-        // Filter for approved lost items only
-        const lostItems = storedItems.filter(item => 
-          item.type === 'lost' && 
-          item.status === 'approved' &&
-          (!user || item.reportedBy !== user.email) // Show all items if not logged in, otherwise exclude user's own items
+        const token = localStorage.getItem("token");
+        const response = await fetch('http://localhost:8080/api/user/lost-items', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch items');
+        }
+
+        const data = await response.json();
+        const lostItems = data.filter(item => 
+          item.reportType === 'lost' && 
+          (!user || item.reportedBy !== user.email)
         );
-        
-        console.log('Fetched lost items:', lostItems); // Debug log
         
         setItems(lostItems);
         setFilteredItems(lostItems);
-
-        // Get security questions
-        const storedQuestions = JSON.parse(localStorage.getItem('securityQuestions') || '[]');
-        setSecurityQuestions(storedQuestions.filter(q => q.active));
       } catch (error) {
         console.error('Error fetching items:', error);
         setError('Failed to fetch items');
@@ -53,8 +54,8 @@ const DisplayLostItems = () => {
   useEffect(() => {
     const filtered = items.filter(item => {
       const matchesSearch = 
-        item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.itemName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.itemDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.location?.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesCategory = 
@@ -63,20 +64,70 @@ const DisplayLostItems = () => {
       return matchesSearch && matchesCategory;
     });
 
-    console.log('Filtered items:', filtered); // Debug log
     setFilteredItems(filtered);
   }, [searchTerm, selectedCategory, items]);
 
   // Initialize claim process
-  const handleInitiateClaim = (item) => {
+  const handleInitiateClaim = async (item) => {
     if (!user) {
       setError('Please log in to claim items');
       return;
     }
-    setSelectedItem(item);
-    setAnswers({});
-    setError('');
-    setShowClaimModal(true);
+    
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:8080/api/user/security-questions/${item.itemId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch security questions');
+      }
+
+      const questions = await response.json();
+      setSecurityQuestions(questions);
+      setSelectedItem(item);
+      setAnswers({});
+      setError('');
+      setShowClaimModal(true);
+    } catch (error) {
+      console.error('Error fetching security questions:', error);
+      setError('Failed to fetch security questions');
+    }
+  };
+
+  // Handle claim submission
+  const handleClaimSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:8080/api/user/security-questions/validate/${selectedItem.itemId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(Object.values(answers).map(answer => ({
+          ...answer,
+          itemId: selectedItem.itemId
+        })))
+      });
+
+      const result = await response.json();
+
+      if (result.message === "All answers are correct") {
+        setSuccess('Claim submitted successfully!');
+        setShowClaimModal(false);
+      } else {
+        setError('One or more answers are incorrect');
+      }
+    } catch (error) {
+      console.error('Error submitting claim:', error);
+      setError('Failed to submit claim');
+    }
   };
 
   return (
@@ -124,28 +175,25 @@ const DisplayLostItems = () => {
           </Col>
         ) : (
           filteredItems.map(item => (
-            <Col key={item.id} md={4} className="mb-4">
+            <Col key={item.itemId} md={4} className="mb-4">
               <Card>
                 <Card.Body>
-                  <Card.Title>{item.name}</Card.Title>
+                  <Card.Title>{item.itemName}</Card.Title>
                   <Card.Subtitle className="mb-2 text-muted">
                     {item.category}
                   </Card.Subtitle>
                   <Card.Text>
                     <strong>Location:</strong> {item.location}<br/>
-                    <strong>Description:</strong> {item.description}<br/>
-                    <strong>Date Lost:</strong> {new Date(item.createdAt).toLocaleDateString()}
+                    <strong>Description:</strong> {item.itemDescription}<br/>
+                    <strong>Date Lost:</strong> {new Date(item.date).toLocaleDateString()}
                   </Card.Text>
-                  {item.claimStatus === 'pending' ? (
-                    <Badge bg="warning">Claim Pending</Badge>
-                  ) : (
-                    <Button 
-                      variant="primary"
-                      onClick={() => handleInitiateClaim(item)}
-                    >
-                      Claim This Item
-                    </Button>
-                  )}
+                  <Button 
+                    variant="primary"
+                    onClick={() => handleInitiateClaim(item)}
+                    disabled={item.status === 'claimed'}
+                  >
+                    {item.status === 'claimed' ? 'Already Claimed' : 'Claim This Item'}
+                  </Button>
                 </Card.Body>
               </Card>
             </Col>
@@ -153,7 +201,36 @@ const DisplayLostItems = () => {
         )}
       </Row>
 
-      {/* Add your claim modal here if needed */}
+      {/* Claim Modal */}
+      <Modal show={showClaimModal} onHide={() => setShowClaimModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Claim Item</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleClaimSubmit}>
+            {securityQuestions.map((question, index) => (
+              <Form.Group key={question.id} className="mb-3">
+                <Form.Label>Question {index + 1}: {question.question}</Form.Label>
+                <Form.Control
+                  type="text"
+                  required
+                  onChange={(e) => setAnswers({
+                    ...answers,
+                    [question.id]: {
+                      id: question.id,
+                      question: question.question,
+                      answer: e.target.value
+                    }
+                  })}
+                />
+              </Form.Group>
+            ))}
+            <Button type="submit" variant="primary">
+              Submit Claim
+            </Button>
+          </Form>
+        </Modal.Body>
+      </Modal>
     </Container>
   );
 };

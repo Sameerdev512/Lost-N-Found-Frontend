@@ -140,20 +140,7 @@ const HomePage = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify([
-            {
-              id: 3,
-              question: "What is the colo of the item?",
-              answer: "Ressdd",
-              itemId: 8,
-            },
-            {
-              id: 4,
-              question: "Where did you find the item?",
-              answer: "Parssdk",
-              itemId: 8,
-            },
-          ]),
+          body: JSON.stringify(formattedAnswers),
         }
       );
 

@@ -17,7 +17,6 @@ import {
 } from "react-bootstrap";
 import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
-import { API_BASE_URL } from '../../config/config';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -161,7 +160,7 @@ const UserDashboard = () => {
       const token = localStorage.getItem("token");
       // Handle item update
       const response = await fetch(
-        `${API_BASE_URL}/api/user/report-product`,
+        `http://localhost:8080/api/user/report-product`,
         {
           method: "POST",
           headers: {
@@ -223,7 +222,7 @@ const UserDashboard = () => {
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `${API_BASE_URL}/api/user/delete-item/${itemId}`,
+          `http://localhost:8080/api/user/delete-item/${itemId}`,
           {
             method: "DELETE",
             headers: {
@@ -420,7 +419,7 @@ const UserDashboard = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${API_BASE_URL}/api/user/get-all-items`,
+        `http://localhost:8080/api/user/get-all-items`,
         {
           method: "GET",
           headers: {
@@ -473,7 +472,7 @@ const UserDashboard = () => {
       console.log("Claiming item:", item);
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${API_BASE_URL}/api/user/get-all-questions/${item.itemId}`,
+        `http://localhost:8080/api/user/get-all-questions/${item.itemId}`,
         {
           method: "GET",
           headers: {
@@ -531,7 +530,7 @@ const UserDashboard = () => {
       // Here you can add your API call to submit the answers
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${API_BASE_URL}/api/user/security-questions/validate`,
+        `http://localhost:8080/api/user/security-questions/validate`,
         {
           method: "POST",
           headers: {
@@ -657,7 +656,7 @@ const UserDashboard = () => {
         return;
       }
       const response = await fetch(
-        `${API_BASE_URL}/api/finder/security-questions/${itemId}`,
+        `http://localhost:8080/api/finder/security-questions/${itemId}`,
         {
           method: "POST",
           headers: {
