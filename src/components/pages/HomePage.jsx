@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Button, Badge, Nav, Modal, Form } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Badge, Nav, Modal, Form, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -11,6 +11,8 @@ const HomePage = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [showClaimModal, setShowClaimModal] = useState(false);
   const [selectedClaimItem, setSelectedClaimItem] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const { register, handleSubmit, control, reset, watch, formState: { errors } } = useForm({
     defaultValues: {
@@ -153,7 +155,7 @@ const HomePage = () => {
 
       if (result.message == "All answers are correct")
       {
-        alert("you can calim the product")
+        alert("You have claimed the product and will get the finder details soon .")
       }
         // Reset and close modal
         reset();
@@ -163,6 +165,11 @@ const HomePage = () => {
     } catch (error) {
       console.error("Error submitting answers:", error);
     }
+  };
+
+  const handleViewDetails = (item) => {
+    setSelectedItem(item);
+    setShowDetailsModal(true);
   };
 
   // Filter items based on active tab
@@ -213,11 +220,11 @@ const HomePage = () => {
             <div className="d-flex gap-2">
               <Button 
                 variant="primary" 
-                onClick={() => navigate(user ? '/user/dashboard' : '/login')}
+                onClick={() => handleViewDetails(item)}
               >
                 View Details
               </Button>
-              {item.reportType?.toLowerCase() === "found" && (
+              {item.reportType?.toLowerCase() === "found" && item.status !== "claimed" && (
                 <Button 
                   variant="success"
                   onClick={() => handleClaim(item)}
@@ -233,121 +240,206 @@ const HomePage = () => {
   };
 
   return (
-    <Container className="py-5">
-      {/* Welcome section */}
-      <Row className="text-center mb-5">
-        <Col>
-          <h1 className="display-4">Welcome to Lost & Found</h1>
-          <p className="lead">Your trusted platform for finding lost items and returning found ones</p>
-        </Col>
-      </Row>
+    <>
+      <Container className="py-5">
+        {/* Welcome section */}
+        <Row className="text-center mb-5">
+          <Col>
+            <h1 className="display-4">Welcome to Lost & Found</h1>
+            <p className="lead">Your trusted platform for finding lost items and returning found ones</p>
+          </Col>
+        </Row>
 
-      {/* Filter Tabs */}
-      <Nav variant="tabs" className="mb-4">
-        <Nav.Item>
-          <Nav.Link 
-            active={activeTab === 'all'} 
-            onClick={() => setActiveTab('all')}
-          >
-            All Items
-          </Nav.Link>
-        </Nav.Item>
-        <Nav.Item>
-          <Nav.Link 
-            active={activeTab === 'lost'} 
-            onClick={() => setActiveTab('lost')}
-          >
-            Lost Items
-          </Nav.Link>
-        </Nav.Item>
-        <Nav.Item>
-          <Nav.Link 
-            active={activeTab === 'found'} 
-            onClick={() => setActiveTab('found')}
-          >
-            Found Items
-          </Nav.Link>
-        </Nav.Item>
-      </Nav>
+        {/* Filter Tabs */}
+        <Nav variant="tabs" className="mb-4">
+          <Nav.Item>
+            <Nav.Link 
+              active={activeTab === 'all'} 
+              onClick={() => setActiveTab('all')}
+            >
+              All Items
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link 
+              active={activeTab === 'lost'} 
+              onClick={() => setActiveTab('lost')}
+            >
+              Lost Items
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link 
+              active={activeTab === 'found'} 
+              onClick={() => setActiveTab('found')}
+            >
+              Found Items
+            </Nav.Link>
+          </Nav.Item>
+        </Nav>
 
-      {/* Items Grid */}
-      <Row>
-        {renderItems(filteredItems)}
-      </Row>
+        {/* Items Grid */}
+        <Row>
+          {renderItems(filteredItems)}
+        </Row>
 
-      {/* Claim Modal */}
+        {/* Claim Modal */}
+        <Modal 
+          show={showClaimModal} 
+          onHide={() => {
+            setShowClaimModal(false);
+            reset();
+          }}
+          size="lg"
+        >
+          <Form onSubmit={handleSubmit(onSubmitAnswers)}>
+            <Modal.Header closeButton>
+              <Modal.Title>Answer Security Questions</Modal.Title>
+            </Modal.Header>
+            
+            <Modal.Body>
+              {selectedClaimItem && (
+                <div className="mb-4">
+                  <h6>Item Details:</h6>
+                  <p className="mb-1"><strong>Name:</strong> {selectedClaimItem.itemName}</p>
+                  <p className="mb-1"><strong>Category:</strong> {selectedClaimItem.category}</p>
+                  <p className="mb-1"><strong>Location:</strong> {selectedClaimItem.location}</p>
+                </div>
+              )}
+
+              {fields.map((field, index) => (
+                <Form.Group key={field.id} className="mb-4">
+                  <Form.Label>
+                    <strong>{field.question}</strong>
+                  </Form.Label>
+                  <Form.Control
+                    {...register(`answers.${index}.answer`, {
+                      required: "This answer is required"
+                    })}
+                    type="text"
+                    placeholder="Enter your answer"
+                    isInvalid={errors.answers?.[index]?.answer}
+                  />
+                  {errors.answers?.[index]?.answer && (
+                    <Form.Control.Feedback type="invalid">
+                      {errors.answers[index].answer.message}
+                    </Form.Control.Feedback>
+                  )}
+                  {/* Hidden fields to maintain question data */}
+                  <input type="hidden" {...register(`answers.${index}.questionId`)} />
+                  <input type="hidden" {...register(`answers.${index}.question`)} />
+                </Form.Group>
+              ))}
+            </Modal.Body>
+
+            <Modal.Footer>
+              <Button 
+                variant="secondary" 
+                onClick={() => {
+                  setShowClaimModal(false);
+                  reset();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="primary" 
+                type="submit"
+              >
+                Submit Answers
+              </Button>
+            </Modal.Footer>
+          </Form>
+        </Modal>
+      </Container>
+
+      {/* Details Modal */}
       <Modal 
-        show={showClaimModal} 
-        onHide={() => {
-          setShowClaimModal(false);
-          reset();
-        }}
+        show={showDetailsModal} 
+        onHide={() => setShowDetailsModal(false)}
         size="lg"
       >
-        <Form onSubmit={handleSubmit(onSubmitAnswers)}>
-          <Modal.Header closeButton>
-            <Modal.Title>Answer Security Questions</Modal.Title>
-          </Modal.Header>
-          
-          <Modal.Body>
-            {selectedClaimItem && (
-              <div className="mb-4">
-                <h6>Item Details:</h6>
-                <p className="mb-1"><strong>Name:</strong> {selectedClaimItem.itemName}</p>
-                <p className="mb-1"><strong>Category:</strong> {selectedClaimItem.category}</p>
-                <p className="mb-1"><strong>Location:</strong> {selectedClaimItem.location}</p>
-              </div>
-            )}
+        <Modal.Header closeButton>
+          <Modal.Title>Item Details</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedItem && (
+            <div className="item-details">
+              <Card className="mb-4">
+                <Card.Header className="d-flex justify-content-between align-items-center">
+                  <h5 className="mb-0">{selectedItem.itemName}</h5>
+                  <Badge bg={selectedItem.reportType?.toLowerCase() === "lost" ? "danger" : "success"}>
+                    {selectedItem.reportType}
+                  </Badge>
+                </Card.Header>
+                <Card.Body>
+                  <Table borderless>
+                    <tbody>
+                      <tr>
+                        <td width="30%"><strong>Status:</strong></td>
+                        <td>
+                          <Badge bg={selectedItem.status === "approved" ? "success" : 
+                                   selectedItem.status === "claimed" ? "info" : "warning"}>
+                            {selectedItem.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td><strong>Category:</strong></td>
+                        <td>{selectedItem.category}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Location:</strong></td>
+                        <td>{selectedItem.location}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Report Date:</strong></td>
+                        <td>{selectedItem.date ? new Date(selectedItem.date).toLocaleDateString() : "N/A"}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Description:</strong></td>
+                        <td>{selectedItem.itemDescription}</td>
+                      </tr>
+                      {selectedItem.additionalDetails && (
+                        <tr>
+                          <td><strong>Additional Details:</strong></td>
+                          <td>{selectedItem.additionalDetails}</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </Table>
+                </Card.Body>
+              </Card>
 
-            {fields.map((field, index) => (
-              <Form.Group key={field.id} className="mb-4">
-                <Form.Label>
-                  <strong>{field.question}</strong>
-                </Form.Label>
-                <Form.Control
-                  {...register(`answers.${index}.answer`, {
-                    required: "This answer is required"
-                  })}
-                  type="text"
-                  placeholder="Enter your answer"
-                  isInvalid={errors.answers?.[index]?.answer}
-                />
-                {errors.answers?.[index]?.answer && (
-                  <Form.Control.Feedback type="invalid">
-                    {errors.answers[index].answer.message}
-                  </Form.Control.Feedback>
-                )}
-                {/* Hidden fields to maintain question data */}
-                <input type="hidden" {...register(`answers.${index}.questionId`)} />
-                <input type="hidden" {...register(`answers.${index}.question`)} />
-              </Form.Group>
-            ))}
-          </Modal.Body>
-
-          <Modal.Footer>
-            <Button 
-              variant="secondary" 
-              onClick={() => {
-                setShowClaimModal(false);
-                reset();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button 
-              variant="primary" 
-              type="submit"
-            >
-              Submit Answers
-            </Button>
-          </Modal.Footer>
-        </Form>
+              {selectedItem.reportType?.toLowerCase() === "found" && selectedItem.status !== "claimed" && (
+                <div className="text-end">
+                  <Button 
+                    variant="success"
+                    onClick={() => {
+                      setShowDetailsModal(false);
+                      handleClaim(selectedItem);
+                    }}
+                  >
+                    Claim This Item
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
       </Modal>
-    </Container>
+    </>
   );
 };
 
 export default HomePage;
+
+
 
 
 

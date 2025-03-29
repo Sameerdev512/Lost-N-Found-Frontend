@@ -4,7 +4,6 @@ import { Card, Form, Button, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
-import { API_BASE_URL } from '../../config/config';
 
 const Login = () => {
   const {
@@ -22,7 +21,7 @@ const Login = () => {
       setIsLoading(true);
       setLoginError("");
 
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch("http://localhost:8080/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -54,13 +53,25 @@ const Login = () => {
 
       localStorage.setItem("token", responseData.token);
       localStorage.setItem("role",responseData.role);
-      localStorage.setItem("name",responseData.name)
+      localStorage.setItem("name",responseData)
 
       // Role-based navigation
       if (responseData.role.toLowerCase() === 'admin') {
+        localStorage.getItem("admin",{
+          firstName: "Sameer",
+          lastName: "Khatri",
+          email: "admin@gmail.com",
+          phoneNumber: "9111045198",
+          address: "59/3 shiv bagh colony Khajrana, Indore M.P. India",
+        });
         navigate('/admin/dashboard');
       } else {
+        localStorage.getItem("user",{firstName: "Sameer", lastName: "Khatri", email: "sameer.khatri2022@sait.ac.in", phoneNumber: "9111045198",address
+: 
+"59/3 shiv bagh colony Khajrana, Indore M.P. India"
+      })
         navigate('/user/dashboard'); // Make sure this matches the route path
+
       }
 
     } catch (error) {

@@ -163,6 +163,8 @@ body {
   }
 }
 
+
+
 // Button Styles
 .btn {
   font-size: 0.875rem;
@@ -182,8 +184,8 @@ body {
   }
 
   &-outline-primary {
-    border-color: $primary-color;
-    color: $primary-color;
+    border-color: whitesmoke;
+    color: $light-bg;
     
     &:hover {
       background-color: $primary-color;
@@ -287,4 +289,117 @@ body {
     margin: 0 -1rem;
   }
 
+}
+
+// Profile Page Enhancements
+.bg-gradient-primary {
+  background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+}
+
+.profile-form {
+  .form-control {
+    transition: all 0.3s ease;
+    border: 1px solid $border-color;
+    color: $text-primary; // Ensure text is dark and visible
+    font-size: 1rem; // Slightly larger font size
+    
+    &:focus {
+      border-color: $primary-color;
+      box-shadow: 0 0 0 0.2rem rgba($primary-color, 0.15);
+    }
+    
+    &:disabled {
+      background-color: rgba($light-bg, 0.8);
+      cursor: not-allowed;
+      color: rgba($text-primary, 0.8); // Slightly dimmed but still readable
+    }
+
+    &::placeholder {
+      color: rgba($text-primary, 0.5); // More visible placeholder text
+    }
+  }
+
+  .form-label {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    color: $text-primary; // Ensure labels are clearly visible
+    font-weight: 500;
+    
+    i {
+      opacity: 0.8;
+    }
+  }
+
+  .form-text {
+    color: rgba($text-primary, 0.7); // More visible helper text
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+  }
+
+  .invalid-feedback {
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    color: $danger-color; // Ensure error messages are clearly visible
+    font-weight: 500;
+  }
+}
+
+.alert {
+  border-left: 4px solid;
+  
+  &-success {
+    border-left-color: $success-color;
+    background-color: rgba($success-color, 0.1);
+    color: darken($success-color, 20%); // Darker text for better readability
+  }
+  
+  &-danger {
+    border-left-color: $danger-color;
+    background-color: rgba($danger-color, 0.1);
+    color: darken($danger-color, 20%); // Darker text for better readability
+  }
+}
+
+.btn {
+  &.rounded-pill {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  &-primary {
+    background: $gradient-primary;
+    border: none;
+    color: white; // Ensure button text is white and visible
+    font-weight: 500;
+    
+    &:hover {
+      background: linear-gradient(135deg, darken($primary-color, 5%) 0%, darken($secondary-color, 5%) 100%);
+    }
+
+    &:disabled {
+      opacity: 0.8;
+    }
+  }
+}
+
+// Additional contrast improvements
+.text-primary {
+  color: darken($primary-color, 10%) !important; // Darker shade for better readability
+}
+
+.text-muted {
+  color: rgba($text-primary, 0.7) !important; // More visible muted text
+}
+
+// Card header text improvements
+.card-header {
+  &.bg-gradient-primary {
+    h3 {
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); // Subtle text shadow for better contrast
+    }
+    
+    .opacity-75 {
+      opacity: 0.9 !important; // Increase opacity for better visibility
+    }
+  }
 }

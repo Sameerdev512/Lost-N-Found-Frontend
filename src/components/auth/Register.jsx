@@ -82,7 +82,7 @@ const Register = () => {
 
           {registerError && <Alert variant="danger">{registerError}</Alert>}
 
-          <Form onSubmit={handleSubmit(onSubmit)}>
+          <Form onSubmit={handleSubmit(onSubmit)} style={{width:"40vw"}}>
             <Form.Group className="mb-3">
               <Form.Label>Username</Form.Label>
               <Form.Control

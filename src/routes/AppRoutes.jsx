@@ -16,6 +16,7 @@ import { AuthProvider } from "../context/AuthContext";
 import { useAuth } from "../context/AuthContext";
 import UserDashboard from "../components/user/UserDashboard";
 import HomePage from "../components/pages/HomePage";
+import UserProfile from "../components/user/UserProfile";
 
 // Wrapper component for public routes
 const PublicRoute = ({ children }) => {
@@ -90,11 +91,19 @@ function AppRouter() {
               </PrivateRoute>
             }
           />
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <UserProfile />
+              </PrivateRoute>
+            }
+          />
 
           <Route
             path="/admin/dashboard"
             element={
-              <PrivateRoute adminOnly={true}>
+              <PrivateRoute >
                 <AdminDashboard />
               </PrivateRoute>
             }

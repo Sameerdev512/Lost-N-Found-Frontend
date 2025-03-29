@@ -1,15 +1,15 @@
-import { Navbar, Nav, Container, Button } from 'react-bootstrap'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { Navbar, Nav, Container, Button } from 'react-bootstrap';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Navigation = () => {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
+    logout();
+    navigate('/login');
+  };
 
   const handleBrandClick = () => {
     if (user) {
@@ -17,45 +17,90 @@ const Navigation = () => {
     } else {
       navigate('/login');
     }
-  }
+  };
+
+  const role = localStorage.getItem("role");
+  console.log(role)
 
   return (
-    <Navbar bg="light" expand="lg" className="mb-4">
+    <Navbar 
+      expand="lg" 
+      className="navbar-custom shadow-lg sticky-top navbar-dark bg-gradient-primary"
+      variant="dark"
+    >
       <Container>
-        <Navbar.Brand
-          onClick={handleBrandClick}
-          style={{ cursor: "pointer" }}
+        <Navbar.Brand 
+          onClick={handleBrandClick} 
+          className="brand-text fw-bold d-flex align-items-center py-2"
         >
-          Lost & Found
+          <div className="brand-icon-wrapper me-2">
+            <i className="bi bi-search-heart-fill cursor"></i>
+          </div>
+          <div style={{cursor:"pointer"}}
+          >Lost & Found</div>
         </Navbar.Brand>
 
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Toggle 
+          aria-controls="basic-navbar-nav" 
+          className="border-0 shadow-none custom-toggler"
+        />
+        
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
             {user && (
               <>
-                <Nav.Link as={Link} to="user/dashboard">
+                <Nav.Link 
+                  as={Link}   
+                  to={role == "ADMIN" ? "/admin/dashboard" : "/user/dashboard"}
+                  className="nav-link-custom mx-2 d-flex align-items-center"
+                >
+                  <div className="nav-icon-wrapper me-2">
+                    <i className="bi bi-grid-fill"></i>
+                  </div>
                   Dashboard
                 </Nav.Link>
-                {user.role === "admin" && (
-                  <Nav.Link as={Link} to="/admin/dashboard">
-                    Admin
-                  </Nav.Link>
-                )}
+
+
+                <Nav.Link 
+                  as={Link} 
+                  to="/profile"
+                  className="nav-link-custom mx-2 d-flex align-items-center"
+                >
+                  <div className="nav-icon-wrapper me-2">
+                    <i className="bi bi-person-circle"></i>
+                  </div>
+                  Profile
+                </Nav.Link>
               </>
             )}
           </Nav>
-          <Nav>
+          
+          <Nav className="d-flex align-items-center gap-3">
             {user ? (
-              <Button variant="outline-primary" onClick={handleLogout}>
+              <Button 
+                variant="outline-primary" 
+                onClick={handleLogout}
+                className="rounded-pill px-4 nav-btn-custom"
+              >
+                <i className="bi bi-box-arrow-right me-2"></i>
                 Logout
               </Button>
             ) : (
               <>
-                <Nav.Link as={Link} to="/login">
+                <Nav.Link 
+                  as={Link} 
+                  to="/login"
+                  className="nav-link-custom mx-2"
+                >
+                  <i className="bi bi-box-arrow-in-right me-2"></i>
                   Login
                 </Nav.Link>
-                <Nav.Link as={Link} to="/register">
+                <Nav.Link 
+                  as={Link} 
+                  to="/register"
+                  className="nav-btn-register rounded-pill px-4 ms-2"
+                >
+                  <i className="bi bi-person-plus-fill me-2"></i>
                   Register
                 </Nav.Link>
               </>
@@ -65,6 +110,6 @@ const Navigation = () => {
       </Container>
     </Navbar>
   );
-}
+};
 
 export default Navigation

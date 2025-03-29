@@ -143,10 +143,7 @@ const UserDashboard = () => {
   };
 
   const onSubmit = async (data) => {
-    console.log("in submit")
     try {
-      console.log(data);
-      // Create the item object to send to the backend
       const itemData = {
         itemName: data.name,
         itemDescription: data.description,
@@ -158,14 +155,13 @@ const UserDashboard = () => {
       };
 
       const token = localStorage.getItem("token");
-      // Handle item update
       const response = await fetch(
         `http://localhost:8080/api/user/report-product`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Add the auth token
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(itemData),
         }
@@ -176,34 +172,19 @@ const UserDashboard = () => {
       }
 
       const updatedItem = await response.json();
-      // Update local state
-      setItems((prevItems) =>
-        prevItems.map((item) =>
-          item.id === editingItem.id ? updatedItem : item
-        )
-      );
-      showMessage("success", "Item updated successfully");
 
-      // Handle new item creation
-      // const response = await fetch('http://localhost:8080/api/items', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${user.token}` // Add the auth token
-      //   },
-      //   body: JSON.stringify(itemData)
-      // });
-
-      // if (!response.ok) {
-      //   throw new Error('Failed to create item');
-      // }
-
-      // const newItem = await response.json();
-      // // Update local state
-      // setItems(prevItems => [...prevItems, newItem]);
-      // showMessage('success', 'Item reported successfully');
-
+      // Close modal first
       handleCloseModal();
+      
+      // Show success message
+      alert("Item added successfully.");
+      
+      // Trigger a re-fetch of all items
+      setRender(prev => !prev);
+      
+      // Show success message in the UI
+      showMessage("success", "Item added successfully");
+
     } catch (error) {
       showMessage(
         "danger",
@@ -434,25 +415,23 @@ const UserDashboard = () => {
       }
 
       const result = await response.json();
-      console.log("Backend Response:", result); // Log the response to see the structure
+      
+      // Set all items first
+      setItems(result);
+      // Also set filtered items to show all items initially
+      setFilteredItems(result);
 
-      // Assuming result is an array of objects
-      const userItems = result.filter(item => item.userId === user.id);
-      console.log("User Items:", userItems);
-
+      // Then set lost and found items
       const lostItemsList = result.filter(item => 
         item.reportType?.toLowerCase() === "lost" && 
         item.userId !== user.id
       );
-      console.log("Lost Items:", lostItemsList);
 
       const foundItemsList = result.filter(item => 
         item.reportType?.toLowerCase() === "found" && 
         item.userId !== user.id
       );
-      console.log("Found Items:", foundItemsList);
 
-      setItems(userItems);
       setLostItems(lostItemsList);
       setFoundItems(foundItemsList);
 
@@ -462,10 +441,9 @@ const UserDashboard = () => {
     }
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     handleAllItemsDisplay();
-    setFilteredItems(items); // Initialize with all items
-  },[render])
+  }, [render]);
 
   const handleClaimItem = async (item) => {
     try {
@@ -605,10 +583,11 @@ const UserDashboard = () => {
               </Button>
             )}
             
+            {/* Delete button - Always show this */}
             <Button 
               variant="outline-danger" 
               size="sm"
-              onClick={() => handleDelete(item.itemId)}  // Changed from item.id to item.itemId
+              onClick={() => handleDelete(item.itemId)}
             >
               <i className="bi bi-trash me-1"></i>
               Delete
@@ -623,6 +602,7 @@ const UserDashboard = () => {
     const [questions, setQuestions] = useState([
       { id: Date.now(), question: '', answer: '' }
     ]);
+    const [errors, setErrors] = useState({});  // Add this for error handling
 
     const addQuestion = () => {
       setQuestions([
@@ -634,6 +614,10 @@ const UserDashboard = () => {
     const removeQuestion = (id) => {
       if (questions.length > 1) {
         setQuestions(questions.filter(q => q.id !== id));
+        // Clear errors for removed question
+        const newErrors = { ...errors };
+        delete newErrors[id];
+        setErrors(newErrors);
       }
     };
 
@@ -641,42 +625,60 @@ const UserDashboard = () => {
       setQuestions(questions.map(q => 
         q.id === id ? { ...q, [field]: value } : q
       ));
+      // Clear error when user starts typing
+      if (errors[id]) {
+        const newErrors = { ...errors };
+        delete newErrors[id];
+        setErrors(newErrors);
+      }
     };
 
     const handleSaveQuestions = async(itemId) => {
-
       const token = localStorage.getItem("token");
+      
+      // Validate all questions
+      const newErrors = {};
+      questions.forEach(q => {
+        if (!q.question.trim() || !q.answer.trim()) {
+          newErrors[q.id] = "Both question and answer are required";
+        }
+      });
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
+
       // Filter out empty questions and remove the id field
       const validQuestions = questions
         .filter(q => q.question.trim() !== '' && q.answer.trim() !== '')
-        .map(({ question, answer }) => ({ question, answer })); // Only keep question and answer fields
+        .map(({ question, answer }) => ({ question, answer }));
 
-      if (validQuestions.length === 0) {
-        alert('Please add at least one question and answer');
-        return;
-      }
-      const response = await fetch(
-        `http://localhost:8080/api/finder/security-questions/${itemId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(validQuestions),
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/finder/security-questions/${itemId}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(validQuestions),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to save questions');
         }
-      );
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch items');
+        // Close modal and reset
+        setShowSecurityQuestionModal(false);
+        setQuestions([{ id: Date.now(), question: '', answer: '' }]);
+        setErrors({});
+      } catch (error) {
+        console.error('Error saving questions:', error);
+        alert('Failed to save security questions');
       }
-      // Log both the item ID and the questions
-      console.log('Item ID:', itemId);
-      console.log('Security Questions:', validQuestions);
-
-      // Close modal and reset
-      setShowSecurityQuestionModal(false);
-      setQuestions([{ id: Date.now(), question: '', answer: '' }]);
     };
 
     return (
@@ -695,15 +697,14 @@ const UserDashboard = () => {
               <div key={q.id} className="border rounded p-3 mb-3">
                 <div className="d-flex justify-content-between mb-2">
                   <h6>Question {index + 1}</h6>
-                  {questions.length > 1 && (
-                    <Button 
-                      variant="outline-danger" 
-                      size="sm"
-                      onClick={() => removeQuestion(q.id)}
-                    >
-                      <i className="bi bi-trash"></i>
-                    </Button>
-                  )}
+                  <Button 
+                    variant="outline-danger" 
+                    size="sm"
+                    onClick={() => removeQuestion(q.id)}
+                    className="delete-btn" // Make sure delete button is always visible
+                  >
+                    <i className="bi bi-trash"></i>
+                  </Button>
                 </div>
 
                 <Form.Group className="mb-3">
@@ -713,6 +714,7 @@ const UserDashboard = () => {
                     value={q.question}
                     onChange={(e) => handleQuestionChange(q.id, 'question', e.target.value)}
                     placeholder="Enter security question"
+                    isInvalid={!!errors[q.id]}
                   />
                 </Form.Group>
 
@@ -723,7 +725,13 @@ const UserDashboard = () => {
                     value={q.answer}
                     onChange={(e) => handleQuestionChange(q.id, 'answer', e.target.value)}
                     placeholder="Enter answer"
+                    isInvalid={!!errors[q.id]}
                   />
+                  {errors[q.id] && (
+                    <Form.Control.Feedback type="invalid">
+                      {errors[q.id]}
+                    </Form.Control.Feedback>
+                  )}
                 </Form.Group>
               </div>
             ))}
@@ -745,6 +753,7 @@ const UserDashboard = () => {
             onClick={() => {
               setShowSecurityQuestionModal(false);
               setQuestions([{ id: Date.now(), question: '', answer: '' }]);
+              setErrors({});
             }}
           >
             Cancel
@@ -973,77 +982,6 @@ const UserDashboard = () => {
                   </Form.Control.Feedback>
                 )}
               </Form.Group>
-
-              {/* Add Security Questions section that shows only when type is "found" */}
-              {watch("type") === "found" && (
-                <div className="mt-4">
-                  <h5>Security Questions</h5>
-                  <p className="text-muted small">
-                    Add questions that the owner should be able to answer to claim
-                    this item
-                  </p>
-
-                  {securityQuestions.map((q, index) => (
-                    <div key={q.id} className="border rounded p-3 mb-3">
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <h6>Question {index + 1}</h6>
-                        {securityQuestions.length > 1 && (
-                          <Button
-                            variant="outline-danger"
-                            size="sm"
-                            onClick={() => removeSecurityQuestion(q.id)}
-                          >
-                            Remove
-                          </Button>
-                        )}
-                      </div>
-
-                      <Form.Group className="mb-2">
-                        <Form.Label>Question</Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={q.question}
-                          onChange={(e) =>
-                            handleSecurityQuestionChange(
-                              q.id,
-                              "question",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Enter security question"
-                          required
-                        />
-                      </Form.Group>
-
-                      <Form.Group>
-                        <Form.Label>Answer</Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={q.answer}
-                          onChange={(e) =>
-                            handleSecurityQuestionChange(
-                              q.id,
-                              "answer",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Enter answer"
-                          required
-                        />
-                      </Form.Group>
-                    </div>
-                  ))}
-
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={addSecurityQuestion}
-                    className="mb-3"
-                  >
-                    + Add Another Question
-                  </Button>
-                </div>
-              )}
             </Modal.Body>
             <Modal.Footer>
               <Button variant="secondary" onClick={handleCloseModal}>
