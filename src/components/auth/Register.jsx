@@ -22,21 +22,13 @@ const Register = () => {
     try {
       setRegisterError("");
 
-      // Prepare the request body according to your API requirements
-      const requestBody = {
-        username: data.email, // Using email as username
-        password: data.password,
-        name: data.username, // Using username field as name
-      };
-
-      // Make API call to your localhost endpoint
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: data.email, // Using email as username
+          username: data.email,
           password: data.password,
           name: data.username,
           role: "USER",
@@ -47,23 +39,11 @@ const Register = () => {
       console.log(responseData);
       alert(responseData);
 
-      navigate("/login");
+      // Simply redirect to login page after successful registration
+      navigate("/login", {
+        state: { message: "Registration successful! Please login with your credentials." }
+      });
 
-      // If registration is successful, create user session data
-      const userData = {
-        token: responseData.token,
-        username: data.username,
-        email: data.email,
-        role: "USER",
-      };
-
-      // Log the user in
-      await login(userData);
-
-      
-
-      // // Redirect based on role
-      // navigate(userData.role === "ADMIN" ? "/admin/dashboard" : "/dashboard");
     } catch (error) {
       setRegisterError(
         error.message || "Registration failed. Please try again."
