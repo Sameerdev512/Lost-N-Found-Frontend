@@ -54,7 +54,7 @@ const Login = () => {
       localStorage.setItem("token", responseData.token);
       localStorage.setItem("token", responseData.token);
       localStorage.setItem("role",responseData.role);
-      localStorage.setItem("name",responseData.name)
+      localStorage.setItem("name",responseData.name);
 
       // Role-based navigation
       if (responseData.role.toLowerCase() === 'admin') {

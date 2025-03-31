@@ -94,6 +94,41 @@ const UserDashboard = () => {
     reset: claimReset,
   } = useForm();
   const [claimedItems, setClaimedItems] = useState([]);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedDetailItem, setSelectedDetailItem] = useState(null);
+  const [itemSecurityQuestions, setItemSecurityQuestions] = useState([]);
+
+  // Add this function to handle viewing details
+  const handleViewDetails = async(item) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `http://localhost:8080/api/finder/get-item-security-questions/${item.id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch security questions");
+      }
+
+      const result = await response.json();
+      console.log("Security Questions Response:", result); // Debug log
+      setItemSecurityQuestions(result); // Store the security questions
+      setSelectedDetailItem(item);
+      setShowDetailsModal(true);
+    } catch (error) {
+      console.error("Error fetching security questions:", error);
+      setItemSecurityQuestions([]);
+      setSelectedDetailItem(item);
+      setShowDetailsModal(true);
+    }
+  };
 
   // Add this new function to handle filtering
   const handleFilter = (filterType) => {
@@ -656,15 +691,19 @@ const UserDashboard = () => {
                 </Badge>
               </p>
 
-              {/* Claimed Information - Show for all items */}
-              <p className="mb-2">
-                <strong>Claimed By:</strong>{" "}
-                {item?.claimedUserName || item?.calimedUsername || "Not claimed"}
-              </p>
-              <p className="mb-2">
-                <strong>Claimed At:</strong>{" "}
-                {item?.claimedAt ? new Date(item.claimedAt).toLocaleString() : "Not claimed"}
-              </p>
+              {/* Remove this entire section that shows claimed information */}
+              {/* {item?.reportType?.toLowerCase() === "found" && (
+                <>
+                  <p className="mb-2">
+                    <strong>Claimed By:</strong>{" "}
+                    {item?.claimedUserName || item?.calimedUsername || "Not claimed"}
+                  </p>
+                  <p className="mb-2">
+                    <strong>Claimed At:</strong>{" "}
+                    {item?.claimedAt ? new Date(item.claimedAt).toLocaleString() : "Not claimed"}
+                  </p>
+                </>
+              )} */}
             </div>
             <div className="text-muted mb-3 small">
               <div>Reported on:{" "}
@@ -674,33 +713,46 @@ const UserDashboard = () => {
               </div>
             </div>
 
-            {/* Action Buttons - Only show if item is not claimed */}
-            {item?.status?.toLowerCase() !== "claimed" && (
-              <div className="d-flex gap-2 mt-auto">
-                {item?.reportType?.toLowerCase() === "found" && (
-                  <Button
-                    variant="info"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedItem(item);
-                      setShowSecurityQuestionModal(true);
-                    }}
-                  >
-                    <i className="bi bi-shield-lock me-1"></i>
-                    Add Security Question
-                  </Button>
-                )}
+            {/* Action Buttons */}
+            <div className="d-flex gap-2 mt-auto">
+              {/* View Details button - always visible */}
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => handleViewDetails(item)}
+              >
+                <i className="bi bi-eye-fill me-1"></i>
+                View Details
+              </Button>
 
-                <Button
-                  variant="outline-danger"
-                  size="sm"
-                  onClick={() => handleDelete(item.id)}
-                >
-                  <i className="bi bi-trash me-1"></i>
-                  Delete
-                </Button>
-              </div>
-            )}
+              {/* Other buttons - only show if item is not claimed */}
+              {item?.status?.toLowerCase() !== "claimed" && (
+                <>
+                  {item?.reportType?.toLowerCase() === "found" && (
+                    <Button
+                      variant="info"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedItem(item);
+                        setShowSecurityQuestionModal(true);
+                      }}
+                    >
+                      <i className="bi bi-shield-lock me-1"></i>
+                      Add Security Question
+                    </Button>
+                  )}
+
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    onClick={() => handleDelete(item.id)}
+                  >
+                    <i className="bi bi-trash me-1"></i>
+                    Delete
+                  </Button>
+                </>
+              )}
+            </div>
             
             {/* Show a message if item is claimed */}
             {item?.status?.toLowerCase() === "claimed" && (
@@ -899,6 +951,272 @@ const UserDashboard = () => {
 
   const name = localStorage.getItem("name");
 
+  const ItemDetailsModal = ({ show, onHide, item }) => {
+    return (
+      <Modal 
+        show={show} 
+        onHide={onHide}
+        size="lg"
+        dialogClassName="modal-90w"
+      >
+        <Modal.Header closeButton className="bg-light">
+          <Modal.Title className="d-flex align-items-center">
+            <span className="me-2">Item Details</span>
+            <Badge bg={item?.reportType?.toLowerCase() === "lost" ? "danger" : "success"}>
+              {item?.reportType}
+            </Badge>
+          </Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body className="p-4">
+          <Card className="border-0">
+            <Card.Body>
+              {/* Item Name and Status Section */}
+              <div className="mb-4">
+                <h4 className="mb-3">{item?.itemName || "Unnamed Item"}</h4>
+                <Badge bg={
+                  item?.status?.toLowerCase() === "claimed" ? "info" :
+                  item?.status?.toLowerCase() === "approved" ? "success" : "warning"
+                } className="px-3 py-2">
+                  {item?.status}
+                </Badge>
+              </div>
+
+              <Row>
+                {/* Image Column */}
+                <Col md={6} className="mb-4 mb-md-0">
+                  <img
+                    src={getRandomImage(item?.reportType, item?.status)}
+                    alt={item?.itemName}
+                    className="img-fluid rounded shadow-sm"
+                    style={{ 
+                      width: "100%", 
+                      height: "300px", 
+                      objectFit: "cover",
+                      border: "1px solid #dee2e6"
+                    }}
+                  />
+                </Col>
+
+                {/* Details Column */}
+                <Col md={6}>
+                  <div className="details-section">
+                    {/* Basic Information */}
+                    <h6 className="border-bottom pb-2 mb-3">Basic Information</h6>
+                    <Table borderless className="details-table">
+                      <tbody>
+                        <tr>
+                          <td width="35%"><strong>Category:</strong></td>
+                          <td>{item?.category || "Not specified"}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Location:</strong></td>
+                          <td>{item?.location || "Not specified"}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Report Date:</strong></td>
+                          <td>{item?.date ? new Date(item.date).toLocaleString() : "Not specified"}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Reported By:</strong></td>
+                          <td>{item?.finderOrOwnerName || item?.reportedBy || "Anonymous"}</td>
+                        </tr>
+                      </tbody>
+                    </Table>
+
+                    {/* Claim Information - Only show if item is claimed */}
+                    {item?.status?.toLowerCase() === "claimed" && (
+                      <>
+                        <h6 className="border-bottom pb-2 mb-3 mt-4">Claim Information</h6>
+                        <Table borderless className="details-table">
+                          <tbody>
+                            <tr>
+                              <td width="35%"><strong>Claimed By:</strong></td>
+                              <td>{item?.claimedUserName || "Not specified"}</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Claimed At:</strong></td>
+                              <td>{item?.claimedAt ? new Date(item.claimedAt).toLocaleString() : "Not specified"}</td>
+                            </tr>
+                          </tbody>
+                        </Table>
+                      </>
+                    )}
+                  </div>
+                </Col>
+              </Row>
+
+              {/* Description Section */}
+              <div className="mt-4">
+                <h6 className="border-bottom pb-2 mb-3">Description</h6>
+                <p className="text-muted">
+                  {item?.description || item?.itemDescription || "No description available"}
+                </p>
+              </div>
+
+              {/* Security Questions Section - Only show if questions exist */}
+              {itemSecurityQuestions && itemSecurityQuestions.length > 0 && (
+                <div className="mt-4">
+                  <h6 className="border-bottom pb-2 mb-3">Security Questions</h6>
+                  {itemSecurityQuestions.map((qa, index) => (
+                    <div 
+                      key={qa.id || index} 
+                      className="mb-3 p-3 bg-light rounded"
+                    >
+                      <p className="mb-2">
+                        <strong>Question {index + 1}:</strong><br/>
+                        {qa.question}
+                      </p>
+                      <p className="mb-0">
+                        <strong>Answer:</strong><br/>
+                        {qa.answer}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Modal.Body>
+
+        <Modal.Footer className="bg-light">
+          <Button variant="secondary" onClick={onHide}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
+  // Add this function to render claimed items
+  const renderClaimedItemCard = (item) => {
+    return (
+      <Col key={item.itemId} xs={12} md={6} lg={4} className="mb-4">
+        <Card className="h-100 shadow-sm">
+          <Card.Img 
+            variant="top" 
+            src={getRandomImage(item.reportType, item.status)} 
+            alt={item?.name || item?.itemName || "Item Image"}
+            style={{ height: '200px', objectFit: 'cover' }}
+          />
+          <Card.Body className="d-flex flex-column">
+            <Card.Title className="d-flex justify-content-between align-items-start mb-3">
+              <span className="text-truncate me-2">
+                {item?.name || item?.itemName || "Unnamed Item"}
+              </span>
+              <Badge
+                bg={item?.reportType?.toLowerCase() === "lost" ? "danger" : "success"}
+              >
+                {item?.reportType || "Unknown"}
+              </Badge>
+            </Card.Title>
+            
+            <Card.Subtitle className="mb-3 text-muted">
+              {item?.category || "No Category"}
+            </Card.Subtitle>
+            
+            <div className="mb-3">
+              <p className="mb-2">
+                <strong>Location:</strong> {item?.location || "No Location"}
+              </p>
+              <p className="mb-2">
+                <strong>Description:</strong><br />
+                {item?.description || item?.itemDescription || "No Description"}
+              </p>
+              <p className="mb-2">
+                <strong>Reported By:</strong>{" "}
+                {item?.finderOrOwnerName || item?.reportedBy || item?.email || "Anonymous"}
+              </p>
+              <p className="mb-2">
+                <strong>Status:</strong>{" "}
+                <Badge bg={getStatusBadgeVariant(item?.status)}>
+                  {item?.status || "Unknown"}
+                </Badge>
+              </p>
+            </div>
+
+            <div className="text-muted mb-3 small">
+              <div>
+                Reported on:{" "}
+                {item?.date
+                  ? new Date(item.date).toLocaleDateString()
+                  : "Unknown date"}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="d-flex gap-2 mt-auto">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => handleViewDetails(item)}
+              >
+                <i className="bi bi-eye-fill me-1"></i>
+                View Details
+              </Button>
+
+              {item?.status?.toLowerCase() !== "claimed" && (
+                <>
+                  {item?.reportType?.toLowerCase() === "found" && (
+                    <Button
+                      variant="info"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedItem(item);
+                        setShowSecurityQuestionModal(true);
+                      }}
+                    >
+                      <i className="bi bi-shield-lock me-1"></i>
+                      Add Security Question
+                    </Button>
+                  )}
+
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    onClick={() => handleDelete(item.id)}
+                  >
+                    <i className="bi bi-trash me-1"></i>
+                    Delete
+                  </Button>
+                </>
+              )}
+            </div>
+          </Card.Body>
+        </Card>
+      </Col>
+    );
+  };
+
+  // Update the claimed items section in your JSX
+  const renderClaimedItemsSection = () => (
+    <Tab.Pane eventKey="claimedItems">
+      <Card>
+        <Card.Header>
+          <h4>Claimed Items</h4>
+        </Card.Header>
+        <Card.Body>
+          {!claimedItems || claimedItems.length === 0 ? (
+            <Alert variant="info">
+              You haven't claimed any items yet.
+            </Alert>
+          ) : (
+            <>
+              <div className="mb-3">
+                <small className="text-muted">
+                  Showing {claimedItems.length} claimed items
+                </small>
+              </div>
+              <Row xs={1} md={2} lg={3} className="g-4">
+                {claimedItems.map((item) => renderClaimedItemCard(item))}
+              </Row>
+            </>
+          )}
+        </Card.Body>
+      </Card>
+    </Tab.Pane>
+  );
+
   return (
     <>
       <Container className="py-4">
@@ -1028,82 +1346,7 @@ const UserDashboard = () => {
               </Card>
             </Tab.Pane>
 
-            <Tab.Pane eventKey="claimedItems">
-              <Card>
-                <Card.Header>
-                  <h4>Claimed Items</h4>
-                </Card.Header>
-                <Card.Body>
-                  {console.log("Rendering claimed items:", claimedItems)}{" "}
-                  {/* Debug log */}
-                  {!claimedItems || claimedItems.length === 0 ? (
-                    <Alert variant="info">
-                      You haven't claimed any items yet.
-                    </Alert>
-                  ) : (
-                    <>
-                      <div className="mb-3">
-                        <small className="text-muted">
-                          Showing {claimedItems.length} claimed items
-                        </small>
-                      </div>
-                      <Row xs={1} md={2} lg={3} className="g-4">
-                        {claimedItems.map((item) => (
-                          <Col key={item.itemId}>
-                            <Card>
-                              <Card.Body>
-                                <Card.Title className="d-flex justify-content-between align-items-start">
-                                  {item?.name ||
-                                    item?.itemName ||
-                                    "Unnamed Item"}
-                                  <Badge
-                                    bg={
-                                      item?.reportType?.toLowerCase() === "lost"
-                                        ? "danger"
-                                        : "success"
-                                    }
-                                  >
-                                    {item?.reportType || "Unknown"}
-                                  </Badge>
-                                </Card.Title>
-                                <Card.Subtitle className="mb-2 text-muted">
-                                  {item?.category || "No Category"}
-                                </Card.Subtitle>
-                                <Card.Text>
-                                  <strong>Location:</strong>{" "}
-                                  {item?.location || "No Location"}
-                                  <br />
-                                  <strong>Description:</strong>
-                                  <br />
-                                  {item?.description ||
-                                    item?.itemDescription ||
-                                    "No Description"}
-                                </Card.Text>
-                                <div className="mb-3">
-                                  <Badge
-                                    bg={getStatusBadgeVariant(item?.status)}
-                                  >
-                                    {item?.status || "Unknown"}
-                                  </Badge>
-                                  <small className="text-muted ms-2">
-                                    ID: {item.itemId}
-                                    <br />
-                                    Reported on:{" "}
-                                    {item?.date
-                                      ? new Date(item.date).toLocaleDateString()
-                                      : "Unknown date"}
-                                  </small>
-                                </div>
-                              </Card.Body>
-                            </Card>
-                          </Col>
-                        ))}
-                      </Row>
-                    </>
-                  )}
-                </Card.Body>
-              </Card>
-            </Tab.Pane>
+            {renderClaimedItemsSection()}
           </Tab.Content>
         </Tab.Container>
 
@@ -1299,6 +1542,14 @@ const UserDashboard = () => {
           </Form>
         </Modal>
       </Container>
+      <ItemDetailsModal
+        show={showDetailsModal}
+        onHide={() => {
+          setShowDetailsModal(false);
+          setSelectedDetailItem(null);
+        }}
+        item={selectedDetailItem}
+      />
     </>
   );
 };
