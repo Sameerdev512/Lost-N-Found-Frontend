@@ -102,6 +102,9 @@ const UserDashboard = () => {
   const handleViewDetails = async(item) => {
     try {
       const token = localStorage.getItem("token");
+      
+      console.log(item.id)
+      // First fetch: Security Questions
       const response = await fetch(
         `http://localhost:8080/api/finder/get-item-security-questions/${item.id}`,
         {
@@ -118,14 +121,41 @@ const UserDashboard = () => {
       }
 
       const result = await response.json();
-      console.log("Security Questions Response:", result); // Debug log
-      setItemSecurityQuestions(result); // Store the security questions
+      setItemSecurityQuestions(result);
       setSelectedDetailItem(item);
+
+      // Second fetch: Claimed User Details (if item is claimed)
+      if (item.status?.toLowerCase() === "claimed" && item.claimedUserId) {
+        console.log("Fetching claimed user details for ID:", item.claimedUserId); // Debug log
+        
+        const userResponse = await fetch(
+          `http://localhost:8080/api/user/get-user-details/${item.claimedUserId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!userResponse.ok) {
+          throw new Error("Failed to fetch claimed user details");
+        }
+
+        const claimedUserDetails = await userResponse.json();
+        console.log("Claimed user details:", claimedUserDetails); // Debug log
+
+        setSelectedDetailItem(prev => ({
+          ...prev,
+          claimedUserDetails: claimedUserDetails
+        }));
+      }
+
       setShowDetailsModal(true);
     } catch (error) {
-      console.error("Error fetching security questions:", error);
-      setItemSecurityQuestions([]);
-      setSelectedDetailItem(item);
+      console.error("Error:", error);
+      // Still show modal even if there's an error
       setShowDetailsModal(true);
     }
   };
@@ -951,137 +981,128 @@ const UserDashboard = () => {
 
   const name = localStorage.getItem("name");
 
-  const ItemDetailsModal = ({ show, onHide, item }) => {
+  const ItemDetailsModal = ({ show, onHide, item, itemSecurityQuestions }) => {
     return (
-      <Modal 
-        show={show} 
-        onHide={onHide}
-        size="lg"
-        dialogClassName="modal-90w"
-      >
-        <Modal.Header closeButton className="bg-light">
-          <Modal.Title className="d-flex align-items-center">
-            <span className="me-2">Item Details</span>
-            <Badge bg={item?.reportType?.toLowerCase() === "lost" ? "danger" : "success"}>
-              {item?.reportType}
-            </Badge>
+      <Modal show={show} onHide={onHide} size="lg" centered>
+        <Modal.Header closeButton className="border-bottom-0 pb-0">
+          <Modal.Title className="w-100">
+            <div className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">{item?.itemName || "Item Details"}</h5>
+              <Badge 
+                bg={item?.reportType?.toLowerCase() === "lost" ? "danger" : "success"}
+                className="px-3 py-2"
+              >
+                {item?.reportType}
+              </Badge>
+            </div>
           </Modal.Title>
         </Modal.Header>
 
-        <Modal.Body className="p-4">
-          <Card className="border-0">
-            <Card.Body>
-              {/* Item Name and Status Section */}
-              <div className="mb-4">
-                <h4 className="mb-3">{item?.itemName || "Unnamed Item"}</h4>
-                <Badge bg={
-                  item?.status?.toLowerCase() === "claimed" ? "info" :
-                  item?.status?.toLowerCase() === "approved" ? "success" : "warning"
-                } className="px-3 py-2">
-                  {item?.status}
-                </Badge>
+        <Modal.Body className="pt-3">
+          <Row>
+            {/* Left Column - Image and Basic Info */}
+            <Col md={5}>
+              <img
+                src={getRandomImage(item?.reportType, item?.status)}
+                alt={item?.itemName}
+                className="img-fluid rounded shadow-sm mb-3"
+                style={{ width: '100%', height: '250px', objectFit: 'cover' }}
+              />
+              <div className="bg-light rounded p-3 mb-3">
+                <div className="d-flex justify-content-between mb-2">
+                  <span className="text-muted">Status</span>
+                  <Badge bg={
+                    item?.status === "claimed" ? "info" :
+                    item?.status === "approved" ? "success" : "warning"
+                  }>
+                    {item?.status}
+                  </Badge>
+                </div>
+                <div className="d-flex justify-content-between mb-2">
+                  <span className="text-muted">Category</span>
+                  <span>{item?.category || "Not specified"}</span>
+                </div>
+                <div className="d-flex justify-content-between">
+                  <span className="text-muted">Location</span>
+                  <span>{item?.location || "Not specified"}</span>
+                </div>
               </div>
+            </Col>
 
-              <Row>
-                {/* Image Column */}
-                <Col md={6} className="mb-4 mb-md-0">
-                  <img
-                    src={getRandomImage(item?.reportType, item?.status)}
-                    alt={item?.itemName}
-                    className="img-fluid rounded shadow-sm"
-                    style={{ 
-                      width: "100%", 
-                      height: "300px", 
-                      objectFit: "cover",
-                      border: "1px solid #dee2e6"
-                    }}
-                  />
-                </Col>
-
-                {/* Details Column */}
-                <Col md={6}>
-                  <div className="details-section">
-                    {/* Basic Information */}
-                    <h6 className="border-bottom pb-2 mb-3">Basic Information</h6>
-                    <Table borderless className="details-table">
-                      <tbody>
-                        <tr>
-                          <td width="35%"><strong>Category:</strong></td>
-                          <td>{item?.category || "Not specified"}</td>
-                        </tr>
-                        <tr>
-                          <td><strong>Location:</strong></td>
-                          <td>{item?.location || "Not specified"}</td>
-                        </tr>
-                        <tr>
-                          <td><strong>Report Date:</strong></td>
-                          <td>{item?.date ? new Date(item.date).toLocaleString() : "Not specified"}</td>
-                        </tr>
-                        <tr>
-                          <td><strong>Reported By:</strong></td>
-                          <td>{item?.finderOrOwnerName || item?.reportedBy || "Anonymous"}</td>
-                        </tr>
-                      </tbody>
-                    </Table>
-
-                    {/* Claim Information - Only show if item is claimed */}
-                    {item?.status?.toLowerCase() === "claimed" && (
-                      <>
-                        <h6 className="border-bottom pb-2 mb-3 mt-4">Claim Information</h6>
-                        <Table borderless className="details-table">
-                          <tbody>
-                            <tr>
-                              <td width="35%"><strong>Claimed By:</strong></td>
-                              <td>{item?.claimedUserName || "Not specified"}</td>
-                            </tr>
-                            <tr>
-                              <td><strong>Claimed At:</strong></td>
-                              <td>{item?.claimedAt ? new Date(item.claimedAt).toLocaleString() : "Not specified"}</td>
-                            </tr>
-                          </tbody>
-                        </Table>
-                      </>
-                    )}
-                  </div>
-                </Col>
-              </Row>
-
-              {/* Description Section */}
-              <div className="mt-4">
-                <h6 className="border-bottom pb-2 mb-3">Description</h6>
+            {/* Right Column - Details */}
+            <Col md={7}>
+              <div className="mb-4">
+                <h6 className="border-bottom pb-2 mb-3">
+                  <i className="bi bi-info-circle me-2"></i>Description
+                </h6>
                 <p className="text-muted">
                   {item?.description || item?.itemDescription || "No description available"}
                 </p>
               </div>
 
-              {/* Security Questions Section - Only show if questions exist */}
-              {itemSecurityQuestions && itemSecurityQuestions.length > 0 && (
-                <div className="mt-4">
-                  <h6 className="border-bottom pb-2 mb-3">Security Questions</h6>
+              <div className="mb-4">
+                <h6 className="border-bottom pb-2 mb-3">
+                  <i className="bi bi-person me-2"></i>Reporter Details
+                </h6>
+                <div className="bg-light rounded p-3">
+                  <p className="mb-2">
+                    <strong>Name:</strong> {item?.finderOrOwnerName || "Anonymous"}
+                  </p>
+                  <p className="mb-2">
+                    <strong>Email:</strong> {item?.email || "Not specified"}
+                  </p>
+                  <p className="mb-0">
+                    <strong>Report Date:</strong> {item?.date ? new Date(item.date).toLocaleDateString() : "Not specified"}
+                  </p>
+                </div>
+              </div>
+
+              {item?.status === "claimed" && (
+                <div className="mb-4">
+                  <h6 className="border-bottom pb-2 mb-3">
+                    <i className="bi bi-person-check me-2"></i>Claimer Details
+                  </h6>
+                  <div className="bg-light rounded p-3">
+                    <p className="mb-2">
+                      <strong>Name:</strong> {item?.claimedUserDetails?.name || "Not specified"}
+                    </p>
+                    <p className="mb-2">
+                      <strong>Student ID:</strong> {item?.claimedUserDetails?.studentId || "Not specified"}
+                    </p>
+                    <p className="mb-2">
+                      <strong>Department:</strong> {item?.claimedUserDetails?.department || "Not specified"}
+                    </p>
+                    <p className="mb-0">
+                      <strong>Claimed At:</strong> {item?.claimedAt ? new Date(item.claimedAt).toLocaleString() : "Not specified"}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {itemSecurityQuestions?.length > 0 && (
+                <div>
+                  <h6 className="border-bottom pb-2 mb-3">
+                    <i className="bi bi-shield-lock me-2"></i>Security Questions
+                  </h6>
                   {itemSecurityQuestions.map((qa, index) => (
-                    <div 
-                      key={qa.id || index} 
-                      className="mb-3 p-3 bg-light rounded"
-                    >
+                    <div key={qa.id || index} className="bg-light rounded p-3 mb-2">
                       <p className="mb-2">
-                        <strong>Question {index + 1}:</strong><br/>
-                        {qa.question}
+                        <strong>Q{index + 1}:</strong> {qa.question}
                       </p>
                       <p className="mb-0">
-                        <strong>Answer:</strong><br/>
-                        {qa.answer}
+                        <strong>A:</strong> {qa.answer}
                       </p>
                     </div>
                   ))}
                 </div>
               )}
-            </Card.Body>
-          </Card>
+            </Col>
+          </Row>
         </Modal.Body>
 
-        <Modal.Footer className="bg-light">
+        <Modal.Footer className="border-top">
           <Button variant="secondary" onClick={onHide}>
-            Close
+            <i className="bi bi-x-circle me-1"></i>Close
           </Button>
         </Modal.Footer>
       </Modal>
@@ -1225,8 +1246,27 @@ const UserDashboard = () => {
             <h1>My Dashboard</h1>
             <p>Welcome back, {name}!</p>
           </Col>
-          <Col xs="auto">
-            <Button onClick={() => handleShowModal()}>Report New Item</Button>
+          <Col xs="auto" className="d-flex gap-2">
+            <Button 
+              variant="outline-primary" 
+              onClick={() => navigate("/user/claimed-items")}
+              className="d-flex align-items-center py-4"
+              size="sm"
+              style={{ height: '30px' }}
+            >
+              <i className="bi bi-box-seam me-1"></i>
+              My Claimed Items
+            </Button>
+            <Button 
+              variant="primary"
+              onClick={() => handleShowModal()}
+              className="d-flex align-items-center py-4"
+              size="sm"
+              style={{ height: '30px' }}
+            >
+              <i className="bi bi-plus-circle me-1"></i>
+              Report New Item
+            </Button>
           </Col>
         </Row>
 
@@ -1240,14 +1280,6 @@ const UserDashboard = () => {
           <Nav variant="tabs" className="mb-3">
             <Nav.Item>
               <Nav.Link eventKey="myItems">My Reported Items</Nav.Link>
-            </Nav.Item>
-            <Nav.Item>
-              <Nav.Link
-                eventKey="claimedItems"
-                onClick={handleClaimedItemsClick}
-              >
-                My Claimed Items
-              </Nav.Link>
             </Nav.Item>
           </Nav>
 
@@ -1549,9 +1581,10 @@ const UserDashboard = () => {
           setSelectedDetailItem(null);
         }}
         item={selectedDetailItem}
+        itemSecurityQuestions={itemSecurityQuestions}
       />
     </>
   );
 };
 
-export default UserDashboard;
+export default UserDashboard

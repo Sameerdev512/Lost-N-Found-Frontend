@@ -139,7 +139,17 @@ const HomePage = () => {
       }
 
       const result = await response.json();
+      console.log("Loaded items:", result); // Debug log to see the fetched items
       setItems(result);
+
+      // Additional debugging information
+      console.log("Number of items loaded:", result.length);
+      console.log("Sample item structure:", result[0]); // Show structure of first item
+      
+      // Log filtered items
+      const filteredItems = getFilteredItems();
+      console.log("Filtered items:", filteredItems);
+      console.log("Number of filtered items:", filteredItems.length);
     } catch (error) {
       console.error("Error loading items:", error);
     }
