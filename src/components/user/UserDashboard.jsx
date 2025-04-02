@@ -984,125 +984,144 @@ const UserDashboard = () => {
   const ItemDetailsModal = ({ show, onHide, item, itemSecurityQuestions }) => {
     return (
       <Modal show={show} onHide={onHide} size="lg" centered>
-        <Modal.Header closeButton className="border-bottom-0 pb-0">
+        <Modal.Header closeButton className="bg-light">
           <Modal.Title className="w-100">
             <div className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">{item?.itemName || "Item Details"}</h5>
-              <Badge 
-                bg={item?.reportType?.toLowerCase() === "lost" ? "danger" : "success"}
-                className="px-3 py-2"
-              >
-                {item?.reportType}
-              </Badge>
+              <h5 className="mb-0">{item?.itemName || item?.name || "Item Details"}</h5>
+              <div className="d-flex gap-2">
+                <Badge bg={item?.status?.toLowerCase() === "claimed" ? "info" : 
+                          item?.status?.toLowerCase() === "approved" ? "success" : "warning"}>
+                  {item?.status || "Pending"}
+                </Badge>
+                <Badge bg={item?.reportType?.toLowerCase() === "lost" ? "danger" : "success"}>
+                  {item?.reportType || "Unknown"}
+                </Badge>
+              </div>
             </div>
           </Modal.Title>
         </Modal.Header>
 
-        <Modal.Body className="pt-3">
-          <Row>
-            {/* Left Column - Image and Basic Info */}
-            <Col md={5}>
-              <img
-                src={getRandomImage(item?.reportType, item?.status)}
-                alt={item?.itemName}
-                className="img-fluid rounded shadow-sm mb-3"
-                style={{ width: '100%', height: '250px', objectFit: 'cover' }}
-              />
-              <div className="bg-light rounded p-3 mb-3">
-                <div className="d-flex justify-content-between mb-2">
-                  <span className="text-muted">Status</span>
-                  <Badge bg={
-                    item?.status === "claimed" ? "info" :
-                    item?.status === "approved" ? "success" : "warning"
-                  }>
-                    {item?.status}
-                  </Badge>
-                </div>
-                <div className="d-flex justify-content-between mb-2">
-                  <span className="text-muted">Category</span>
-                  <span>{item?.category || "Not specified"}</span>
-                </div>
-                <div className="d-flex justify-content-between">
-                  <span className="text-muted">Location</span>
-                  <span>{item?.location || "Not specified"}</span>
+        <Modal.Body className="p-4">
+          {/* Main Item Information */}
+          <Row className="mb-4">
+            <Col md={6}>
+              <div className="position-relative">
+                <img
+                  src={getRandomImage(item?.reportType, item?.status)}
+                  alt={item?.itemName}
+                  className="img-fluid rounded shadow"
+                  style={{ width: "100%", height: "300px", objectFit: "cover" }}
+                />
+                <div className="position-absolute bottom-0 start-0 w-100 p-2"
+                     style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.7))' }}>
+                  <small className="text-white">
+                    <i className="bi bi-calendar-event me-2"></i>
+                    Reported: {item?.date ? new Date(item.date).toLocaleDateString() : "Not specified"}
+                  </small>
                 </div>
               </div>
             </Col>
-
-            {/* Right Column - Details */}
-            <Col md={7}>
-              <div className="mb-4">
-                <h6 className="border-bottom pb-2 mb-3">
-                  <i className="bi bi-info-circle me-2"></i>Description
-                </h6>
-                <p className="text-muted">
-                  {item?.description || item?.itemDescription || "No description available"}
-                </p>
-              </div>
-
-              <div className="mb-4">
-                <h6 className="border-bottom pb-2 mb-3">
-                  <i className="bi bi-person me-2"></i>Reporter Details
-                </h6>
-                <div className="bg-light rounded p-3">
-                  <p className="mb-2">
-                    <strong>Name:</strong> {item?.finderOrOwnerName || "Anonymous"}
-                  </p>
-                  <p className="mb-2">
-                    <strong>Email:</strong> {item?.email || "Not specified"}
-                  </p>
-                  <p className="mb-0">
-                    <strong>Report Date:</strong> {item?.date ? new Date(item.date).toLocaleDateString() : "Not specified"}
-                  </p>
-                </div>
-              </div>
-
-              {item?.status === "claimed" && (
+            
+            <Col md={6}>
+              <div className="h-100 d-flex flex-column">
+                {/* Basic Details */}
                 <div className="mb-4">
                   <h6 className="border-bottom pb-2 mb-3">
-                    <i className="bi bi-person-check me-2"></i>Claimer Details
+                    <i className="bi bi-info-circle me-2"></i>Item Details
                   </h6>
-                  <div className="bg-light rounded p-3">
-                    <p className="mb-2">
-                      <strong>Name:</strong> {item?.claimedUserDetails?.name || "Not specified"}
-                    </p>
-                    <p className="mb-2">
-                      <strong>Student ID:</strong> {item?.claimedUserDetails?.studentId || "Not specified"}
-                    </p>
-                    <p className="mb-2">
-                      <strong>Department:</strong> {item?.claimedUserDetails?.department || "Not specified"}
-                    </p>
-                    <p className="mb-0">
-                      <strong>Claimed At:</strong> {item?.claimedAt ? new Date(item.claimedAt).toLocaleString() : "Not specified"}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {itemSecurityQuestions?.length > 0 && (
-                <div>
-                  <h6 className="border-bottom pb-2 mb-3">
-                    <i className="bi bi-shield-lock me-2"></i>Security Questions
-                  </h6>
-                  {itemSecurityQuestions.map((qa, index) => (
-                    <div key={qa.id || index} className="bg-light rounded p-3 mb-2">
+                  <Row>
+                    <Col sm={6}>
                       <p className="mb-2">
-                        <strong>Q{index + 1}:</strong> {qa.question}
+                        <strong>Category:</strong><br/>
+                        {item?.category || "Not specified"}
                       </p>
-                      <p className="mb-0">
-                        <strong>A:</strong> {qa.answer}
+                    </Col>
+                    <Col sm={6}>
+                      <p className="mb-2">
+                        <strong>Location:</strong><br/>
+                        {item?.location || "Not specified"}
                       </p>
-                    </div>
-                  ))}
+                    </Col>
+                  </Row>
                 </div>
-              )}
+
+                {/* Description */}
+                <div className="mb-4">
+                  <h6 className="border-bottom pb-2 mb-3">
+                    <i className="bi bi-card-text me-2"></i>Description
+                  </h6>
+                  <p className="text-muted">
+                    {item?.description || item?.itemDescription || "No description available"}
+                  </p>
+                </div>
+
+                {/* Additional Details if any */}
+                {item?.additionalDetails && (
+                  <div className="mb-4">
+                    <h6 className="border-bottom pb-2 mb-3">
+                      <i className="bi bi-plus-circle me-2"></i>Additional Information
+                    </h6>
+                    <p className="text-muted">{item.additionalDetails}</p>
+                  </div>
+                )}
+              </div>
             </Col>
           </Row>
+
+          {/* Claimer Details Section */}
+          {item?.status?.toLowerCase() === "claimed" && (
+            <div className="mb-4">
+              <h6 className="border-bottom pb-2 mb-3">
+                <i className="bi bi-person-check me-2"></i>Claimer Information
+              </h6>
+              <Row>
+                <Col md={6}>
+                  <p className="mb-2">
+                    <strong>Name:</strong><br/>
+                    {`${item?.claimedUserDetails?.firstName || ''} ${item?.claimedUserDetails?.lastName || ''}`}
+                  </p>
+                </Col>
+                <Col md={6}>
+                  <p className="mb-2">
+                    <strong>Department:</strong><br/>
+                    {item?.claimedUserDetails?.department || "Not specified"}
+                  </p>
+                </Col>
+                <Col md={12}>
+                  <p className="mb-0">
+                    <strong>Claimed Date:</strong><br/>
+                    {item?.claimedAt ? new Date(item.claimedAt).toLocaleString() : "Not specified"}
+                  </p>
+                </Col>
+              </Row>
+            </div>
+          )}
+
+          {/* Security Questions Section */}
+          {itemSecurityQuestions?.length > 0 && (
+            <div>
+              <h6 className="border-bottom pb-2 mb-3">
+                <i className="bi bi-shield-lock me-2"></i>Security Questions
+              </h6>
+              <Row>
+                {itemSecurityQuestions.map((qa, index) => (
+                  <Col md={6} key={qa.id || index} className="mb-3">
+                    <div className="p-3 bg-light rounded">
+                      <p className="mb-2 fw-bold">Question {index + 1}:</p>
+                      <p className="mb-3">{qa.question}</p>
+                      <p className="mb-1 fw-bold">Answer:</p>
+                      <p className="mb-0 text-muted">{qa.answer}</p>
+                    </div>
+                  </Col>
+                ))}
+              </Row>
+            </div>
+          )}
         </Modal.Body>
 
-        <Modal.Footer className="border-top">
+        <Modal.Footer className="bg-light">
           <Button variant="secondary" onClick={onHide}>
-            <i className="bi bi-x-circle me-1"></i>Close
+            <i className="bi bi-x-circle me-2"></i>Close
           </Button>
         </Modal.Footer>
       </Modal>

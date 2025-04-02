@@ -28,6 +28,8 @@ const MyClaimedItems = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedDetailItem, setSelectedDetailItem] = useState(null);
   const [itemSecurityQuestions, setItemSecurityQuestions] = useState([]);
+  const [showFinderModal, setShowFinderModal] = useState(false);
+  const [finderDetails, setFinderDetails] = useState(null);
 
   const fetchClaimedItems = async () => {
     try {
@@ -60,8 +62,6 @@ const MyClaimedItems = () => {
   useEffect(() => {
     fetchClaimedItems();
   }, []);
-
-  const[finderDetails,setFinderDetails] = useState();
 
   const handleViewDetails = async (item) => {
     try {
@@ -180,8 +180,12 @@ const MyClaimedItems = () => {
         <Modal.Header closeButton>
           <Modal.Title>
             {item?.itemName || "Item Details"}
-            <Badge 
-              bg={item?.reportType?.toLowerCase() === "lost" ? "danger" : "success"}
+            <Badge
+              bg={
+                item?.reportType?.toLowerCase() === "lost"
+                  ? "danger"
+                  : "success"
+              }
               className="ms-2"
             >
               {item?.reportType}
@@ -196,39 +200,60 @@ const MyClaimedItems = () => {
                 src={getRandomImage(item?.reportType, item?.status)}
                 alt={item?.itemName}
                 className="img-fluid rounded mb-3"
-                style={{ width: '100%', height: '300px', objectFit: 'cover' }}
+                style={{ width: "100%", height: "300px", objectFit: "cover" }}
               />
             </Col>
-            
+
             <Col md={6}>
               <Table borderless>
                 <tbody>
                   <tr>
-                    <td><strong>Status:</strong></td>
                     <td>
-                      <Badge bg={
-                        item?.status === "claimed" ? "info" : 
-                        item?.status === "approved" ? "success" : "warning"
-                      }>
+                      <strong>Status:</strong>
+                    </td>
+                    <td>
+                      <Badge
+                        bg={
+                          item?.status === "claimed"
+                            ? "info"
+                            : item?.status === "approved"
+                            ? "success"
+                            : "warning"
+                        }
+                      >
                         {item?.status}
                       </Badge>
                     </td>
                   </tr>
                   <tr>
-                    <td><strong>Category:</strong></td>
+                    <td>
+                      <strong>Category:</strong>
+                    </td>
                     <td>{item?.category || "Not specified"}</td>
                   </tr>
                   <tr>
-                    <td><strong>Location:</strong></td>
+                    <td>
+                      <strong>Location:</strong>
+                    </td>
                     <td>{item?.location || "Not specified"}</td>
                   </tr>
                   <tr>
-                    <td><strong>Date:</strong></td>
-                    <td>{item?.date ? new Date(item.date).toLocaleDateString() : "Not specified"}</td>
+                    <td>
+                      <strong>Date:</strong>
+                    </td>
+                    <td>
+                      {item?.date
+                        ? new Date(item.date).toLocaleDateString()
+                        : "Not specified"}
+                    </td>
                   </tr>
                   <tr>
-                    <td><strong>Description:</strong></td>
-                    <td>{item?.itemDescription || "No description available"}</td>
+                    <td>
+                      <strong>Description:</strong>
+                    </td>
+                    <td>
+                      {item?.itemDescription || "No description available"}
+                    </td>
                   </tr>
                 </tbody>
               </Table>
@@ -238,37 +263,31 @@ const MyClaimedItems = () => {
           <hr />
 
           <Row className="mt-3">
-            <Col md={6}>
-              <h6>Finder Details</h6>
-              <Table borderless size="sm">
-                <tbody>
-                  <tr>
-                    <td><strong>Name:</strong></td>
-                    <td>{item?.finderDetails?.name || "Not available"}</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Email:</strong></td>
-                    <td>{item?.finderDetails?.email || "Not available"}</td>
-                  </tr>
-                </tbody>
-              </Table>
-            </Col>
-
             {item?.status === "claimed" && (
-              <Col md={6}>
+              <Col md={12}>
                 <h6>Claimer Details</h6>
                 <Table borderless size="sm">
                   <tbody>
                     <tr>
-                      <td><strong>Name:</strong></td>
-                      <td>{item?.claimerDetails?.name || "Not available"}</td>
+                      <td>
+                        <strong>First Name:</strong>
+                      </td>
+                      <td>{item?.claimerDetails?.firstName || "Not available"}</td>
                     </tr>
                     <tr>
-                      <td><strong>Claim Date:</strong></td>
                       <td>
-                        {item?.claimedAt ? 
-                          new Date(item.claimedAt).toLocaleDateString() : 
-                          "Not available"}
+                        <strong>last Name:</strong>
+                      </td>
+                      <td>{item?.claimerDetails?.lastName || "Not available"}</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <strong>Claimed At:</strong>
+                      </td>
+                      <td>
+                        {item?.claimedAt
+                          ? new Date(item.claimedAt).toLocaleDateString()
+                          : "Not available"}
                       </td>
                     </tr>
                   </tbody>
@@ -279,7 +298,85 @@ const MyClaimedItems = () => {
         </Modal.Body>
 
         <Modal.Footer>
-          <Button variant="secondary" onClick={onHide}>Close</Button>
+          <Button variant="secondary" onClick={onHide}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
+  const finderDetailsButtonClicked = async(item) => {
+    try {
+      const token = localStorage.getItem("token");
+      const itemResponse = await fetch(
+        `http://localhost:8080/api/user/get-user-details/1`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!itemResponse.ok) {
+        throw new Error(`Failed to fetch finder details: ${itemResponse.status}`);
+      }
+
+      const responseText = await itemResponse.text();
+      if (!responseText) {
+        throw new Error("Empty response from server");
+      }
+
+      const finderDetails = JSON.parse(responseText);
+      setFinderDetails(finderDetails);
+      setShowFinderModal(true); // Show the modal after setting the details
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to fetch finder details");
+    }
+  };
+
+  const FinderDetailsModal = ({ show, onHide, finderDetails }) => {
+    return (
+      <Modal show={show} onHide={onHide} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="bi bi-person-badge me-2"></i>
+            Finder Details
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Table borderless>
+            <tbody>
+              <tr>
+                <td><strong>First Name:</strong></td>
+                <td>{finderDetails?.firstName || "Not available"}</td>
+              </tr>
+              <tr>
+                <td><strong>Last Name:</strong></td>
+                <td>{finderDetails?.lastName || "Not available"}</td>
+              </tr>
+              <tr>
+                <td><strong>Email:</strong></td>
+                <td>{finderDetails?.email || "Not available"}</td>
+              </tr>
+              <tr>
+                <td><strong>Phone:</strong></td>
+                <td>{finderDetails?.phone || "Not available"}</td>
+              </tr>
+              <tr>
+                <td><strong>Address:</strong></td>
+                <td>{finderDetails?.address || "Not available"}</td>
+              </tr>
+            </tbody>
+          </Table>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={onHide}>
+            Close
+          </Button>
         </Modal.Footer>
       </Modal>
     );
@@ -378,13 +475,23 @@ const MyClaimedItems = () => {
                 </small>
               </div>
 
-              <Button
-                variant="outline-primary"
-                className="w-100"
-                onClick={() => handleViewDetails(item)}
-              >
-                <i className="bi bi-eye-fill me-1"></i>View Details
-              </Button>
+              <div className="d-flex flex-column gap-2">
+                <Button
+                  variant="outline-primary"
+                  onClick={() => handleViewDetails(item)}
+                >
+                  <i className="bi bi-eye-fill me-1"></i>View Details
+                </Button>
+                
+                <Button
+                  variant="outline-info"
+                  onClick={() => finderDetailsButtonClicked(item)}
+                  className="d-flex align-items-center justify-content-center"
+                >
+                  <i className="bi bi-person-badge me-2"></i>
+                  See Finder Details
+                </Button>
+              </div>
             </div>
           </Card.Body>
         </Card>
@@ -426,6 +533,12 @@ const MyClaimedItems = () => {
         }}
         item={selectedDetailItem}
         securityQuestions={itemSecurityQuestions}
+      />
+
+      <FinderDetailsModal
+        show={showFinderModal}
+        onHide={() => setShowFinderModal(false)}
+        finderDetails={finderDetails}
       />
     </Container>
   );
