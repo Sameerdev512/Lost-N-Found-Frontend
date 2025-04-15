@@ -987,13 +987,28 @@ const UserDashboard = () => {
         <Modal.Header closeButton className="bg-light">
           <Modal.Title className="w-100">
             <div className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">{item?.itemName || item?.name || "Item Details"}</h5>
+              <h5 className="mb-0">
+                {item?.itemName || item?.name || "Item Details"}
+              </h5>
               <div className="d-flex gap-2">
-                <Badge bg={item?.status?.toLowerCase() === "claimed" ? "info" : 
-                          item?.status?.toLowerCase() === "approved" ? "success" : "warning"}>
+                <Badge
+                  bg={
+                    item?.status?.toLowerCase() === "claimed"
+                      ? "info"
+                      : item?.status?.toLowerCase() === "approved"
+                      ? "success"
+                      : "warning"
+                  }
+                >
                   {item?.status || "Pending"}
                 </Badge>
-                <Badge bg={item?.reportType?.toLowerCase() === "lost" ? "danger" : "success"}>
+                <Badge
+                  bg={
+                    item?.reportType?.toLowerCase() === "lost"
+                      ? "danger"
+                      : "success"
+                  }
+                >
                   {item?.reportType || "Unknown"}
                 </Badge>
               </div>
@@ -1012,16 +1027,23 @@ const UserDashboard = () => {
                   className="img-fluid rounded shadow"
                   style={{ width: "100%", height: "300px", objectFit: "cover" }}
                 />
-                <div className="position-absolute bottom-0 start-0 w-100 p-2"
-                     style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.7))' }}>
+                <div
+                  className="position-absolute bottom-0 start-0 w-100 p-2"
+                  style={{
+                    background: "linear-gradient(transparent, rgba(0,0,0,0.7))",
+                  }}
+                >
                   <small className="text-white">
                     <i className="bi bi-calendar-event me-2"></i>
-                    Reported: {item?.date ? new Date(item.date).toLocaleDateString() : "Not specified"}
+                    Reported:{" "}
+                    {item?.date
+                      ? new Date(item.date).toLocaleDateString()
+                      : "Not specified"}
                   </small>
                 </div>
               </div>
             </Col>
-            
+
             <Col md={6}>
               <div className="h-100 d-flex flex-column">
                 {/* Basic Details */}
@@ -1032,13 +1054,15 @@ const UserDashboard = () => {
                   <Row>
                     <Col sm={6}>
                       <p className="mb-2">
-                        <strong>Category:</strong><br/>
+                        <strong>Category:</strong>
+                        <br />
                         {item?.category || "Not specified"}
                       </p>
                     </Col>
                     <Col sm={6}>
                       <p className="mb-2">
-                        <strong>Location:</strong><br/>
+                        <strong>Location:</strong>
+                        <br />
                         {item?.location || "Not specified"}
                       </p>
                     </Col>
@@ -1051,7 +1075,9 @@ const UserDashboard = () => {
                     <i className="bi bi-card-text me-2"></i>Description
                   </h6>
                   <p className="text-muted">
-                    {item?.description || item?.itemDescription || "No description available"}
+                    {item?.description ||
+                      item?.itemDescription ||
+                      "No description available"}
                   </p>
                 </div>
 
@@ -1059,7 +1085,8 @@ const UserDashboard = () => {
                 {item?.additionalDetails && (
                   <div className="mb-4">
                     <h6 className="border-bottom pb-2 mb-3">
-                      <i className="bi bi-plus-circle me-2"></i>Additional Information
+                      <i className="bi bi-plus-circle me-2"></i>Additional
+                      Information
                     </h6>
                     <p className="text-muted">{item.additionalDetails}</p>
                   </div>
@@ -1077,20 +1104,34 @@ const UserDashboard = () => {
               <Row>
                 <Col md={6}>
                   <p className="mb-2">
-                    <strong>Name:</strong><br/>
-                    {`${item?.claimedUserDetails?.firstName || ''} ${item?.claimedUserDetails?.lastName || ''}`}
+                    <strong>Name:</strong>
+                    <br />
+                    {`${item?.claimedUserDetails?.firstName || ""} ${
+                      item?.claimedUserDetails?.lastName || ""
+                    }`}
                   </p>
                 </Col>
                 <Col md={6}>
                   <p className="mb-2">
-                    <strong>Department:</strong><br/>
+                    <strong>Department:</strong>
+                    <br />
                     {item?.claimedUserDetails?.department || "Not specified"}
                   </p>
                 </Col>
-                <Col md={12}>
+                <Col md={6}>
+                  <p className="mb-2">
+                    <strong>Phone no:</strong>
+                    <br />
+                    {item?.claimedUserDetails?.phone || "Not specified"}
+                  </p>
+                </Col>
+                <Col md={6}>
                   <p className="mb-0">
-                    <strong>Claimed Date:</strong><br/>
-                    {item?.claimedAt ? new Date(item.claimedAt).toLocaleString() : "Not specified"}
+                    <strong>Claimed Date:</strong>
+                    <br />
+                    {item?.claimedAt
+                      ? new Date(item.claimedAt).toLocaleString()
+                      : "Not specified"}
                   </p>
                 </Col>
               </Row>
