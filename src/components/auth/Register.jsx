@@ -64,10 +64,10 @@ const Register = () => {
 
           <Form onSubmit={handleSubmit(onSubmit)} style={{width:"40vw"}}>
             <Form.Group className="mb-3">
-              <Form.Label>Username</Form.Label>
+              <Form.Label>Name</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Enter username"
+                placeholder="Enter your name"
                 {...register("username", {
                   required: "Username is required",
                   minLength: {
