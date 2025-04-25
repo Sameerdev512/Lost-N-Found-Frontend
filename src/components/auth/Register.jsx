@@ -59,6 +59,7 @@ const Register = () => {
             <h2>Create Account</h2>
             <p>Please fill in your details to register</p>
           </div>
+          {/* <div></div> */}
 
           {registerError && <Alert variant="danger">{registerError}</Alert>}
 
