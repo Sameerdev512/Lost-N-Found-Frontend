@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
 
+import { API_BASE_URL } from "../../config/config";
+
 const Login = () => {
   const {
     register,
@@ -21,14 +23,14 @@ const Login = () => {
       setIsLoading(true);
       setLoginError("");
 
-      const response = await fetch("http://localhost:8080/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           username: data.email,
-          password: data.password
+          password: data.password,
         }),
       });
 

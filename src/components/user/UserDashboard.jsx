@@ -18,6 +18,8 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
 
+import { API_BASE_URL } from "../../config/config";
+
 const lostImages = [
   "https://placehold.co/300x200/dc3545/ffffff?text=Lost+Item",
   "https://placehold.co/300x200/ff6b6b/ffffff?text=Lost+Object"
@@ -106,7 +108,7 @@ const UserDashboard = () => {
       console.log(item.id)
       // First fetch: Security Questions
       const response = await fetch(
-        `http://localhost:8080/api/finder/get-item-security-questions/${item.id}`,
+        `${API_BASE_URL}/api/finder/get-item-security-questions/${item.id}`,
         {
           method: "GET",
           headers: {
@@ -129,7 +131,7 @@ const UserDashboard = () => {
         console.log("Fetching claimed user details for ID:", item.claimedUserId); // Debug log
         
         const userResponse = await fetch(
-          `http://localhost:8080/api/user/get-user-details/${item.claimedUserId}`,
+          `${API_BASE_URL}/api/user/get-user-details/${item.claimedUserId}`,
           {
             method: "GET",
             headers: {
@@ -179,7 +181,7 @@ const UserDashboard = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:8080/api/finder/get-all-claimed-items`,
+        `${API_BASE_URL}/api/finder/get-all-claimed-items`,
         {
           method: "GET",
           headers: {
@@ -292,7 +294,7 @@ const UserDashboard = () => {
 
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:8080/api/user/report-product`,
+        `${API_BASE_URL}/api/user/report-product`,
         {
           method: "POST",
           headers: {
@@ -338,7 +340,7 @@ const UserDashboard = () => {
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `http://localhost:8080/api/finder/delete-item/${itemId}`,
+          `${API_BASE_URL}/api/finder/delete-item/${itemId}`,
           {
             method: "DELETE",
             headers: {
@@ -535,7 +537,7 @@ const UserDashboard = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:8080/api/finder/get-all-items`,  // Use API_BASE_URL from config
+        `${API_BASE_URL}/api/finder/get-all-items`,  // Use API_BASE_URL from config
         {
           method: "GET",
           headers: {
@@ -593,7 +595,7 @@ const UserDashboard = () => {
       console.log("Claiming item:", item);
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:8080/api/user/get-all-questions/${item.itemId}`,
+        `${API_BASE_URL}/api/user/get-all-questions/${item.itemId}`,
         {
           method: "GET",
           headers: {
@@ -651,7 +653,7 @@ const UserDashboard = () => {
       // Here you can add your API call to submit the answers
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:8080/api/user/security-questions/validate`,
+        `${API_BASE_URL}/api/user/security-questions/validate`,
         {
           method: "POST",
           headers: {
@@ -860,7 +862,7 @@ const UserDashboard = () => {
       try {
       console.log(selectedItem.id);
         const response = await fetch(
-          `http://localhost:8080/api/finder/security-questions/${selectedItem.id}`, // Use selectedItem.itemId
+          `${API_BASE_URL}/api/finder/security-questions/${selectedItem.id}`, // Use selectedItem.itemId
           {
             method: "POST",
             headers: {

@@ -15,6 +15,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useForm, useFieldArray } from "react-hook-form";
 
+import { API_BASE_URL } from "../../config/config";
+
 // Helper function to format date and time
 const formatDateTime = (dateString) => {
   if (!dateString) return "Unknown date/time";
@@ -126,7 +128,7 @@ const HomePage = () => {
   const handleLoadItems = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:8080/api/user/all`, {
+      const response = await fetch(`${API_BASE_URL}/api/user/all`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -169,7 +171,7 @@ const HomePage = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:8080/api/user/get-all-questions/${item.itemId}`,
+        `${API_BASE_URL}/api/user/get-all-questions/${item.itemId}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -226,7 +228,7 @@ const HomePage = () => {
       }));
 
       const response = await fetch(
-        `http://localhost:8080/api/user/security-questions/validate/${selectedClaimItem.itemId}`,
+        `${API_BASE_URL}/api/user/security-questions/validate/${selectedClaimItem.itemId}`,
         {
           method: "POST",
           headers: {
@@ -274,7 +276,7 @@ const HomePage = () => {
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `http://localhost:8080/api/finder/get-item-security-questions/${item.itemId}`,
+          `${API_BASE_URL}/api/finder/get-item-security-questions/${item.itemId}`,
           {
             headers: {
               "Content-Type": "application/json",

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Card, Badge, Button, Row, Col, Table } from 'react-bootstrap';
 
+import { API_BASE_URL } from "../../config/config";
+
 const ItemDetailsPage = () => {
   const { itemId } = useParams();
   const navigate = useNavigate();
@@ -13,11 +15,11 @@ const ItemDetailsPage = () => {
       try {
         const token = localStorage.getItem('token');
         const response = await fetch(
-          `http://localhost:8080/api/finder/get-item/${itemId}`,
+          `${API_BASE_URL}/api/finder/get-item/${itemId}`,
           {
             headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
             },
           }
         );

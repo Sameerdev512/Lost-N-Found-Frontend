@@ -11,6 +11,8 @@ import {
   Table,
 } from "react-bootstrap";
 
+import { API_BASE_URL } from "../../config/config";
+
 const claimedImages = [
   "https://placehold.co/300x200/0dcaf0/ffffff?text=Claimed+Item",
   "https://placehold.co/300x200/20c997/ffffff?text=Claimed+Object"
@@ -35,7 +37,7 @@ const MyClaimedItems = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:8080/api/finder/get-all-claimed-items`,
+        `${API_BASE_URL}/api/finder/get-all-claimed-items`,
         {
           method: "GET",
           headers: {
@@ -84,7 +86,7 @@ const MyClaimedItems = () => {
 
       // Fetch finder/reporter details first
       const itemResponse = await fetch(
-        `http://localhost:8080/api/user/get-user-details/${userIdToFetch}`,
+        `${API_BASE_URL}/api/user/get-user-details/${userIdToFetch}`,
         {
           method: "GET",
           headers: {
@@ -126,7 +128,7 @@ const MyClaimedItems = () => {
       let claimerDetails = null;
       if (item.claimedUserId) {
         const claimerResponse = await fetch(
-          `http://localhost:8080/api/user/get-user-details/${item.claimedUserId}`,
+          `${API_BASE_URL}/api/user/get-user-details/${item.claimedUserId}`,
           {
             method: "GET",
             headers: {
@@ -310,7 +312,7 @@ const MyClaimedItems = () => {
     try {
       const token = localStorage.getItem("token");
       const itemResponse = await fetch(
-        `http://localhost:8080/api/user/get-user-details/1`,
+        `${API_BASE_URL}/api/user/get-user-details/1`,
         {
           method: "GET",
           headers: {

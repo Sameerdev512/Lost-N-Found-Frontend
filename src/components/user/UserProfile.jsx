@@ -34,7 +34,7 @@ const UserProfile = () => {
   const loadProfileData = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:8080/api/user/get-logged-in-user-details", {
+      const response = await fetch("${API_BASE_URL}/api/user/get-logged-in-user-details", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -72,7 +72,7 @@ const UserProfile = () => {
       const token = localStorage.getItem("token");
       
       const response = await fetch(
-        "http://localhost:8080/api/user/updateUserDetails",
+        "${API_BASE_URL}/api/user/updateUserDetails",
         {
           method: "PUT",
           headers: {

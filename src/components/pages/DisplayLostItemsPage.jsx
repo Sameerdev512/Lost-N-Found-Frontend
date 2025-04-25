@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Alert, Badge } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
 
+import { API_BASE_URL } from "../../config/config";
+
 const DisplayLostItemsPage = () => {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
@@ -13,7 +15,7 @@ const DisplayLostItemsPage = () => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch('http://localhost:8080/api/user/lost-items', {
+        const response = await fetch(`${API_BASE_URL}/api/user/lost-items`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -48,7 +50,7 @@ const DisplayLostItemsPage = () => {
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `http://localhost:8080/api/user/delete-item/${itemId}`,
+          `${API_BASE_URL}/api/user/delete-item/${itemId}`,
           {
             method: "DELETE",
             headers: {
