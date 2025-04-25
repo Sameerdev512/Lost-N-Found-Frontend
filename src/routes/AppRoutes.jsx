@@ -38,7 +38,7 @@ function AppRouter() {
         <Navigation />
         <Routes>
           {/* Add Homepage Route */}
-          <Route path="/homepage" element={<HomePage />} />
+          <Route path="/" element={<HomePage />} />
 
           {/* Public Routes with authentication check */}
           <Route
@@ -93,7 +93,7 @@ function AppRouter() {
           />
 
           <Route
-            path="/home"
+            path="/"
             element={
               <PrivateRoute>
                 <HomePage />

@@ -14,11 +14,7 @@ const Navigation = () => {
   };
 
   const handleBrandClick = () => {
-    if (user) {
-      navigate('/home');
-    } else {
-      navigate('/login');
-    }
+      navigate('/');
   };
 
   const role = localStorage.getItem("role");
