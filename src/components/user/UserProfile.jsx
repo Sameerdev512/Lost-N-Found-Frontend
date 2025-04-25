@@ -3,6 +3,8 @@ import { Container, Card, Form, Button, Alert, Row, Col } from "react-bootstrap"
 import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
 
+import { API_BASE_URL } from "../../config/config";
+
 const UserProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
