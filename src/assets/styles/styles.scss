@@ -214,6 +214,11 @@ body {
     font-weight: 600;
     margin-bottom: 0;
   }
+
+  .card-img-top{
+    height:250px;
+    border:2px solid $border-color;
+  }
 }
 
 // Modal Styles

@@ -326,9 +326,9 @@ const HomePage = () => {
           <div className="position-relative">
             <Card.Img
               variant="top"
-              src={getRandomImage(item.reportType, item.status)}
+              src={item.imageUrl?item.imageUrl:getRandomImage(item.reportType, item.status)}
               alt={item.itemName || "Item Image"}
-              style={{ height: "200px", objectFit: "cover" }}
+              style={{ height: "250px", objectFit: "contain" ,width:"100%"}}
               className="card-img-transition"
             />
             <Badge

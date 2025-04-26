@@ -282,26 +282,37 @@ const UserDashboard = () => {
       .toISOString()
       .slice(0, 23); // Keep milliseconds up to 3 decimal places
     try {
-      const itemData = {
-        itemName: data.name,
-        itemDescription: data.description,
-        status: "found",
-        category: data.category,
-        reportType: data.type,
-        location: data.location,
-        date: localISOTime, // Formats to 'YYYY-MM-DDTHH:MM:SS'
-      };
+      // const itemData = {
+      //   itemName: data.name,
+      //   itemDescription: data.description,
+      //   status: "found",
+      //   category: data.category,
+      //   reportType: data.type,
+      //   location: data.location,
+      //   date: localISOTime, // Formats to 'YYYY-MM-DDTHH:MM:SS'
+      //   imageUrl:data.imageUrl
+      // };
+
+      const formData = new FormData();
+      formData.append("name", data.name);
+      formData.append("description", data.description);
+      formData.append("status","found")
+      formData.append("category", data.category);                
+      formData.append("reportType", data.type);
+      formData.append("location", data.location);
+      formData.append("date", localISOTime);
+      formData.append("imageUrl", data.imageUrl[0])
 
       const token = localStorage.getItem("token");
+      // console.log(itemData)
       const response = await fetch(
         `${API_BASE_URL}/api/user/report-product`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(itemData),
+          body: formData,
         }
       );
 
@@ -688,7 +699,7 @@ const UserDashboard = () => {
         <Card className="h-100 shadow-sm">
           <Card.Img 
             variant="top" 
-            src={getRandomImage(item.reportType, item.status)} 
+            src={item.imageUrl?item.imageUrl:getRandomImage(item.reportType, item.status)} 
             alt={item?.name || item?.itemName || "Item Image"}
             style={{ height: '200px', objectFit: 'cover' }}
           />
@@ -1309,22 +1320,22 @@ const UserDashboard = () => {
             <p>Welcome back, {name}!</p>
           </Col>
           <Col xs="auto" className="d-flex gap-2">
-            <Button 
-              variant="outline-primary" 
+            <Button
+              variant="outline-primary"
               onClick={() => navigate("/user/claimed-items")}
               className="d-flex align-items-center py-4"
               size="sm"
-              style={{ height: '30px' }}
+              style={{ height: "30px" }}
             >
               <i className="bi bi-box-seam me-1"></i>
               My Claimed Items
             </Button>
-            <Button 
+            <Button
               variant="primary"
               onClick={() => handleShowModal()}
               className="d-flex align-items-center py-4"
               size="sm"
-              style={{ height: '30px' }}
+              style={{ height: "30px" }}
             >
               <i className="bi bi-plus-circle me-1"></i>
               Report New Item
@@ -1454,6 +1465,16 @@ const UserDashboard = () => {
           <Form onSubmit={handleSubmit(onSubmit)}>
             <Modal.Body>
               <Form.Group className="mb-3">
+                <Form.Group className="mb-3">
+                  <Form.Label>Item image</Form.Label>
+                  <Form.Control
+                    type="file"
+                    {...register("imageUrl")}
+                    isInvalid={!!errors.name}
+                    placeholder="Enter item name"
+                  />
+                  
+                </Form.Group>
                 <Form.Label>Report Type</Form.Label>
                 <Form.Select
                   {...register("type", { required: "Please select a type" })}
@@ -1553,9 +1574,7 @@ const UserDashboard = () => {
           </Form>
         </Modal>
 
-        <SecurityQuestionsModal 
-          selectedItem={selectedItem}
-        />
+        <SecurityQuestionsModal selectedItem={selectedItem} />
 
         {/* Claim Modal with React Hook Form */}
         <Modal
